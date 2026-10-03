@@ -1,0 +1,20 @@
+model:
+  name: hafizqaim/Workspace-Safety-Detection-using-YOLOv8
+  repository: https://github.com/hafizqaim/Workspace-Safety-Detection-using-YOLOv8
+  revision: da9e8a3f41b55e7cc3d6ce400528b0dba939ec33
+  architecture: YOLOv8n
+  weights_url: https://api.github.com/repos/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/releases/assets/273300310
+  weights_sha256: 5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836
+  weights_size_bytes: 6249635
+  local_path: models/preferred-v1.0.0.pt
+  provenance_document: docs/model-selection.md
+  approval:
+    approved: false
+    reviewer: null
+    license_identifier: null
+    license_evidence_url: null
+    actual_classes_verified: false
+    required_classes_supported: false
+# Release metadata is verified, not downloaded bytes or checkpoint classes.
+# The training notebook has no negative vest class. Do not toggle approval
+# without rights review and a documented model/capability decision.

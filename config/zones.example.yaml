@@ -1,0 +1,5 @@
+# EXAMPLE ONLY: placeholder coordinates. Replace with the real polygon per demo clip.
+# Points are [x, y] pixels in the frame, in order around the zone.
+clips:
+  demo_clip_1:
+    polygon: [[100, 200], [400, 200], [400, 500], [100, 500]]

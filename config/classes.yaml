@@ -1,0 +1,11 @@
+# Class mapping, keyed by checkpoint SHA-256. IDs differ between checkpoints.
+checkpoints:
+  5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836:
+    source: hafizqaim
+    classes:
+      14: person
+      12: helmet
+      13: no_helmet
+      16: safety_vest
+    derived:
+      no_safety_vest: "person box with no overlapping safety_vest box"
