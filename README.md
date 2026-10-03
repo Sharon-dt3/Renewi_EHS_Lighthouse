@@ -1,9 +1,9 @@
 # Renewi EHS Lighthouse — PPE PoC
 
 Local Python backend foundation for PEOPLE/PPE worker safety. STEP-01 provides
-an isolated runtime and provenance-gated model download tooling. Inference,
-compliance, geometry, metrics evaluation, and HTTP endpoints are not implemented
-yet. No frontend, forklift logic, face recognition, identity tracking, database,
+an isolated runtime and provenance-gated model download tooling. Model inference, metrics
+evaluation, and HTTP endpoints are not implemented. Pipeline scaffolding under
+`ppe/` exists but has only been tested on synthetic data (see below). No frontend, forklift logic, face recognition, identity tracking, database,
 or cloud infrastructure is included.
 
 ## Local environment
@@ -65,3 +65,30 @@ The approved saved plan lives at the workspace level under
 Complete STEP-01's model approval before STEP-02 inference work. FR-2 remains
 blocked until STEP-03 records an explicit real-model FR-1 pass. A mocked
 downloader test or training notebook class list cannot satisfy that gate.
+
+## Pipeline scaffolding status
+
+`ppe/` contains model-independent building blocks:
+
+- `class_map.py`, `checkpoint.py`, `config/classes.yaml`: map a checkpoint's class IDs to
+  internal labels, keyed by the checkpoint's SHA-256. An unlisted hash raises an error.
+- `pipeline.py`: drops unmapped classes and low-confidence results.
+- `zone.py`, `zone_config.py`: bottom-center point-in-polygon check (edges count as inside).
+  `config/zones.example.yaml` holds placeholder coordinates only.
+- `schema.py`: one JSON shape for a frame result.
+- `detector.py`, `frame_pipeline.py`: the `Detector` interface and the frame pipeline.
+
+Run the tests from the repository root:
+
+```sh
+.venv/bin/python -m pytest backend/tests
+```
+
+### Not verified
+
+- No model has been loaded and no inference has run. All tests use synthetic detections.
+- `config/model.yaml` keeps `approved: false`. Rights, loading approval and the actual
+  checkpoint class check are unresolved (see `docs/model-selection.md`).
+- The pinned Hafizqaim checkpoint has no explicit NO-Safety Vest class. The pipeline never
+  infers it from a missing vest detection; the class must come from the model.
+- No authorized Renewi images, zone polygons or evaluation dataset are available.
