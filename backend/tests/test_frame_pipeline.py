@@ -50,12 +50,12 @@ class FramePipelineTest(unittest.TestCase):
         pipeline.process("f", frame)
         self.assertEqual(detector.frames_seen, [frame])
 
-    def test_unvested_person_in_zone_is_flagged_both_ways(self):
+    def test_person_in_zone_does_not_imply_no_vest(self):
         pipeline, _ = build_pipeline([PERSON_IN_ZONE])
         result = pipeline.process("f", None)
         self.assertEqual(
             [d.label for d in result.detections],
-            [Label.PERSON, Label.NO_SAFETY_VEST],
+            [Label.PERSON],
         )
         self.assertEqual([d.label for d in result.incursions], [Label.PERSON])
 

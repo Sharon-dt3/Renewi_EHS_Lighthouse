@@ -29,12 +29,13 @@ class DetectionNormalizer:
 
 
 class PpeAnalyzer:
-    """Normalizes raw output, then appends derived detections."""
+    """Normalizes explicit model output without inferring missing PPE."""
 
-    def __init__(self, normalizer: DetectionNormalizer, deriver: NoVestDeriver) -> None:
+    def __init__(
+        self, normalizer: DetectionNormalizer, deriver: NoVestDeriver | None = None
+    ) -> None:
+        # The legacy argument is accepted for compatibility but never invoked.
         self._normalizer = normalizer
-        self._deriver = deriver
 
     def analyze(self, raw: Iterable[RawDetection]) -> list[Detection]:
-        detections = self._normalizer.normalize(raw)
-        return detections + self._deriver.derive(detections)
+        return self._normalizer.normalize(raw)

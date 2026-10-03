@@ -1,4 +1,5 @@
 # Class mapping, keyed by checkpoint SHA-256. IDs differ between checkpoints.
+# Hafizqaim has no explicit no_safety_vest class. Never infer it from absence.
 checkpoints:
   5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836:
     source: hafizqaim
@@ -7,5 +8,3 @@ checkpoints:
       12: helmet
       13: no_helmet
       16: safety_vest
-    derived:
-      no_safety_vest: "person box with no overlapping safety_vest box"

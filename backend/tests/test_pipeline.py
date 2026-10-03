@@ -39,11 +39,26 @@ class PpeAnalyzerTest(unittest.TestCase):
     def setUp(self):
         self.analyzer = PpeAnalyzer(DetectionNormalizer(CLASS_MAP), NoVestDeriver())
 
-    def test_unvested_person_gets_derived_no_vest(self):
+    def test_missing_vest_detection_does_not_create_no_vest(self):
         result = self.analyzer.analyze([PERSON, UNMAPPED])
-        self.assertEqual([d.label for d in result], [Label.PERSON, Label.NO_SAFETY_VEST])
-        self.assertTrue(result[1].derived)
+        self.assertEqual([d.label for d in result], [Label.PERSON])
         self.assertFalse(result[0].derived)
+
+    def test_explicit_no_vest_model_output_is_preserved(self):
+        # Synthetic future checkpoint mapping, not a claim about Hafizqaim.
+        mapping = ClassMap("synthetic-five-class", "test", {0: "person", 4: "no_safety_vest"})
+        analyzer = PpeAnalyzer(DetectionNormalizer(mapping))
+        result = analyzer.analyze([(0, 0.9, 0, 0, 100, 200), (4, 0.8, 0, 0, 100, 200)])
+        self.assertEqual([d.label for d in result], [Label.PERSON, Label.NO_SAFETY_VEST])
+        self.assertTrue(all(not d.derived for d in result))
+
+    def test_legacy_deriver_is_never_called(self):
+        class ForbiddenDeriver:
+            def derive(self, detections):
+                raise AssertionError("absence-based derivation must not run")
+
+        analyzer = PpeAnalyzer(DetectionNormalizer(CLASS_MAP), ForbiddenDeriver())
+        self.assertEqual([d.label for d in analyzer.analyze([PERSON])], [Label.PERSON])
 
     def test_vested_person_gets_no_derived_detection(self):
         result = self.analyzer.analyze([PERSON, VEST])
