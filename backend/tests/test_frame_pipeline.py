@@ -5,7 +5,6 @@ from ppe.detections import Label
 from ppe.detector import Detector
 from ppe.frame_pipeline import FramePipeline
 from ppe.pipeline import DetectionNormalizer, PpeAnalyzer
-from ppe.vest_rule import NoVestDeriver
 from ppe.zone import Polygon, ZoneIncursionDetector
 
 CLASS_MAP = ClassMap("test", "test", {14: "person", 16: "safety_vest"})
@@ -29,7 +28,7 @@ def build_pipeline(raw):
     detector = FakeDetector(raw)
     pipeline = FramePipeline(
         detector,
-        PpeAnalyzer(DetectionNormalizer(CLASS_MAP), NoVestDeriver()),
+        PpeAnalyzer(DetectionNormalizer(CLASS_MAP)),
         ZoneIncursionDetector(ZONE),
     )
     return pipeline, detector

@@ -3,7 +3,6 @@ import unittest
 from ppe.class_map import ClassMap
 from ppe.detections import Label
 from ppe.pipeline import DetectionNormalizer, PpeAnalyzer
-from ppe.vest_rule import NoVestDeriver
 
 CLASS_MAP = ClassMap(
     checkpoint_sha256="test",
@@ -37,7 +36,7 @@ class DetectionNormalizerTest(unittest.TestCase):
 
 class PpeAnalyzerTest(unittest.TestCase):
     def setUp(self):
-        self.analyzer = PpeAnalyzer(DetectionNormalizer(CLASS_MAP), NoVestDeriver())
+        self.analyzer = PpeAnalyzer(DetectionNormalizer(CLASS_MAP))
 
     def test_missing_vest_detection_does_not_create_no_vest(self):
         result = self.analyzer.analyze([PERSON, UNMAPPED])
@@ -52,13 +51,15 @@ class PpeAnalyzerTest(unittest.TestCase):
         self.assertEqual([d.label for d in result], [Label.PERSON, Label.NO_SAFETY_VEST])
         self.assertTrue(all(not d.derived for d in result))
 
-    def test_legacy_deriver_is_never_called(self):
-        class ForbiddenDeriver:
-            def derive(self, detections):
-                raise AssertionError("absence-based derivation must not run")
+    def test_vest_elsewhere_in_frame_does_not_create_no_vest(self):
+        far_vest = (16, 0.7, 500, 50, 560, 120)
+        result = self.analyzer.analyze([PERSON, far_vest])
+        self.assertEqual([d.label for d in result], [Label.PERSON, Label.SAFETY_VEST])
 
-        analyzer = PpeAnalyzer(DetectionNormalizer(CLASS_MAP), ForbiddenDeriver())
-        self.assertEqual([d.label for d in analyzer.analyze([PERSON])], [Label.PERSON])
+    def test_no_result_is_ever_marked_derived(self):
+        far_vest = (16, 0.7, 500, 50, 560, 120)
+        result = self.analyzer.analyze([PERSON, VEST, far_vest, UNMAPPED])
+        self.assertTrue(all(not d.derived for d in result))
 
     def test_vested_person_gets_no_derived_detection(self):
         result = self.analyzer.analyze([PERSON, VEST])

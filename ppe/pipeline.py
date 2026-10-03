@@ -2,7 +2,6 @@ from typing import Iterable, Tuple
 
 from ppe.class_map import ClassMap
 from ppe.detections import Box, Detection
-from ppe.vest_rule import NoVestDeriver
 
 # (class_id, confidence, x1, y1, x2, y2) as produced by the model
 RawDetection = Tuple[int, float, float, float, float, float]
@@ -31,10 +30,7 @@ class DetectionNormalizer:
 class PpeAnalyzer:
     """Normalizes explicit model output without inferring missing PPE."""
 
-    def __init__(
-        self, normalizer: DetectionNormalizer, deriver: NoVestDeriver | None = None
-    ) -> None:
-        # The legacy argument is accepted for compatibility but never invoked.
+    def __init__(self, normalizer: DetectionNormalizer) -> None:
         self._normalizer = normalizer
 
     def analyze(self, raw: Iterable[RawDetection]) -> list[Detection]:

@@ -51,7 +51,7 @@ prove that an external dataset or approval record cannot exist.
 
 The workspace and application class-map configurations no longer advertise a
 derived negative-vest class. Both analyzer implementations now return explicit
-model detections only, and the legacy `NoVestDeriver` returns no detections.
+model detections only, and the legacy `NoVestDeriver` helper has since been removed from this repository.
 Missing, low-confidence, occluded or out-of-frame vest detections leave vest
 status **unknown**, not No-Safety Vest. Zone-person detection is unaffected.
 
@@ -99,6 +99,8 @@ The missing class has not yet been learned or validated. Earlier alternative
 model evidence below is retained as history, not a model replacement decision.
 
 ### Verification of this change
+
+Note: `NoVestDeriver` and `test_vest_rule.py` were removed in a later commit. The test counts below describe the earlier run.
 
 Focused `test_vest_rule.py`, `test_pipeline.py`, `test_frame_pipeline.py` and
 `test_class_map.py` runs passed **25 tests in the workspace layout** and
