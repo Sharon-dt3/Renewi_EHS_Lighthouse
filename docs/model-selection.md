@@ -2,13 +2,268 @@
 
 Inspection date: 2026-10-03. Decision: **no model approved**.
 
+Paths such as `utils/`, `models/`, `temp-attachments/` and `kavia-docs/` named below refer to the outer workspace, not to this repository.
+
+## Current direction: fine-tune Hafizqaim for five explicit target classes
+
+Fine-tuning Hafizqaim is a proposed path to add an explicit **No-Safety Vest**
+class, rather than treating "no vest detected" as negative-vest evidence. It is
+not an owner decision and does not replace the earlier alternative-candidate
+preparation. It grants no checkpoint-loading or rights approval.
+
+### Original checkpoint preservation
+
+The workspace `models/best.pt` is the immutable source artifact. Fresh
+byte-only checks found **6,249,635 bytes** and SHA-256
+`5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836`,
+matching the user's required fingerprint. No checkpoint was loaded or written
+during this assessment. Do not rename, replace, or save training results over
+this file. Any authorized training run must mount the source read-only,
+write to a distinct run directory, and verify the original digest before and
+after execution. Record the new artifact's own hash; do not bind it to the
+original class map or silently adopt it.
+
+### Target taxonomy and available training inputs
+
+The existing descriptor at `data/input/ppe5/data.yaml` uses this fixed order:
+
+| Target display name | Training ID | Internal label |
+| --- | --- | --- |
+| Person | 0 | `person` |
+| Helmet | 1 | `helmet` |
+| No-Helmet | 2 | `no_helmet` |
+| Safety Vest | 3 | `safety_vest` |
+| No-Safety Vest | 4 | `no_safety_vest` |
+
+These are **prospective training IDs**, not the original Hafizqaim IDs.
+Its verified serialized taxonomy has `person`, `head_helmet`, `head_nohelmet`,
+and `vest`, but no explicit negative-vest label. Runtime taxonomy and model
+head behavior remain unverified. Adding an alias or editing a names map
+cannot create a learned fifth target class.
+
+Fresh workspace path discovery found the descriptor and empty
+`images/train`, `images/val`, `labels/train`, and `labels/val` directories.
+There are **zero training/validation image-label pairs** in that scaffold.
+The scan excluded virtual environments, Git metadata, skills and node_modules;
+AppleDouble `._*` sidecars are not samples. No training or authorization
+manifest was identified by the bounded workspace discovery. This does not
+prove that an external dataset or approval record cannot exist.
+
+The workspace and application class-map configurations no longer advertise a
+derived negative-vest class. Both analyzer implementations now return explicit
+model detections only, and the legacy `NoVestDeriver` returns no detections.
+Missing, low-confidence, occluded or out-of-frame vest detections leave vest
+status **unknown**, not No-Safety Vest. Zone-person detection is unaffected.
+
+### Required decisions before any training
+
+1. **Renewi data/annotation owner:** supply accessible images with intended-use
+   authorization and provenance, plus complete YOLO bounding-box annotations
+   for all five target classes. Explicit negative-vest labels require a visibly
+   assessable torso without a safety vest; occlusion or a detector miss is not
+   a label. Agree consistent box conventions for persons, head PPE and vest
+   states. Include diverse lighting, viewpoints, occlusion and vest styles;
+   do not generate labels by subtracting vest detections from person detections.
+2. **Dataset/evaluation owner:** document class counts, image-label integrity,
+   class IDs and normalized box validity; split by source clip/site/session
+   before extracting frames to prevent near-duplicate leakage. Supply a
+   separately held-out authorized evaluation set. Previously requested
+   5–10 representative inputs are smoke-test inputs, not evidence of adequate
+   five-class training coverage.
+3. **Rights/model owner:** accept digest-bound exact-weight rights for
+   fine-tuning and intended use, dataset rights and relevant upstream/software
+   obligations. `config/model.yaml` approval, actual-class verification and
+   required-class support flags remain false; reviewer/license fields remain
+   null. This instruction does not establish acceptance of those rights.
+4. **Security/runtime owner:** authorize a digest-bound restricted loading and
+   training harness for the Hafizqaim artifact and pinned packages. The existing
+   preparation-only utility targets Baskarmother and denies all writes; it is
+   neither a Hafizqaim training harness nor training authorization. A virtual
+   environment alone is not hostile-checkpoint containment. Preserve CPU
+   restricted-loading controls and stop on unapproved globals; do not use
+   `weights_only=False`, an unrestricted YOLO object loader, or a blanket
+   safe-global allowlist to bypass the unresolved gate. Review an explicit
+   output-only write boundary for any future training environment.
+5. **Training/model owner, after these gates:** adapt the detection head to the
+   five target classes using a reviewed supported transfer path, train all five
+   together to retain existing capabilities, and save a separate versioned
+   checkpoint. Record seed, package/harness versions, dataset and source hashes,
+   configuration, run logs, output hashes and per-class held-out precision,
+   recall and mAP. Agree acceptance thresholds before evaluation, inspect
+   runtime names/head and failure cases, and register only the validated new
+   checkpoint's class mapping. Training alone does not approve deployment.
+
+**Status: prerequisite assessment completed; training blocked. Checkpoint
+loads: 0; training runs: 0; inference calls: 0; training metrics: not produced.**
+The missing class has not yet been learned or validated. Earlier alternative
+model evidence below is retained as history, not a model replacement decision.
+
+### Verification of this change
+
+Focused `test_vest_rule.py`, `test_pipeline.py`, `test_frame_pipeline.py` and
+`test_class_map.py` runs passed **25 tests in the workspace layout** and
+**25 tests in the application layout**, using the existing project virtual
+environment with bytecode and pytest cache writes disabled. These are
+synthetic rule/pipeline/configuration tests, not training or real-model
+validation. They cover no negative-vest inference from absence, preservation
+of explicit synthetic negative-class outputs, refusal to invoke a legacy
+deriver, unchanged person-zone behavior and class-map handling.
+
+Post-edit byte-only checks reconfirmed the original checkpoint at
+**6,249,635 bytes**, SHA-256
+`5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836`.
+No dependencies were installed and no model approval flags were changed.
+
+## Virtual-environment alternative preparation (not approved) — 2026-10-03
+
+A prior session reports preparing an isolated alternative using the existing
+project virtual environment. No approval for it is recorded in this
+repository. Preparation is reported complete and its preflight passed; **checkpoint loading and real-model validation are not ready**.
+This approval does not establish exact-weight rights, candidate selection,
+sample authorization, or transfer the earlier container-specific loading
+exception to host execution.
+
+The preparation-only preflight utility
+has no download, checkpoint-loading, safe-global addition, or inference mode.
+Run it from the workspace root with:
+
+```sh
+Renewi_EHS_Lighthouse/.venv/bin/python -I -B utils/prepare_model_validation.py
+```
+
+### Verified execution evidence
+
+- macOS 14.6 supplied `/usr/bin/sandbox-exec`; its activation probe succeeded.
+  Docker, Podman, Colima and nerdctl were not found on PATH.
+- The final sandboxed preflight exited **0**, with `preflight_passed: true`.
+  It used Python **3.11.14** and existing virtual-environment packages:
+  PyTorch **2.6.0**, Ultralytics **8.3.70**, OpenCV distribution **4.11.0.86**.
+  Torch and OpenCV runtime imports succeeded. Ultralytics was checked through
+  distribution metadata, not by invoking its object-checkpoint loader.
+- The OS returned `EPERM` for exclusive file creation in the workspace,
+  home directory and `/private/tmp`, outbound loopback socket connection,
+  listening socket binding, and a `/usr/bin/true` child-process attempt.
+  These are tested examples of policy enforcement, not a sandbox certification.
+- The child receives an explicit minimal environment, excluding a synthetic
+  parent sentinel and `TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD`. Python uses `-I -B`,
+  and `TORCH_FORCE_WEIGHTS_ONLY_LOAD=1` is set defensively; no `torch.load`
+  call was made.
+- Limits configured in the worker are 30 CPU seconds, zero core-dump bytes and
+  128 open files; the parent enforces a 60-second wall timeout.
+- The final harness SHA-256 was
+  `0a1eb9db5493f8db0ea505f0dfe4e38c5857ead89e49bc6e581ff9c215d8d012`;
+  generated sandbox-policy SHA-256 was
+  `0974515d7953e9adff5dc3c612c9b4a47ec9a4d57922fa804825adb060204a93`.
+  The utility emits current hashes and the actual policy on each run. These
+  identify the tested preparation artifacts, not a security-owner review or
+  digest-bound approval of a model-loading harness.
+- Byte-only hashing reconfirmed local `models/best.pt` as 6,249,635 bytes,
+  SHA-256 `5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836`
+  (Hafizqaim). It does not match the Baskarmother target of 6,258,474 bytes,
+  SHA-256 `8714b4b2bbde95b3a07dcdbe873995e34742b5ce628464a4da232721d4691ffe`.
+
+### Isolation boundaries and readiness
+
+The virtual environment isolates Python dependencies, **not hostile code**.
+OS restrictions come from the sandbox policy, which allows operations by
+default and explicitly denies filesystem writes, network operations, process
+forks and executable launches except the Python executable needed for startup.
+Because macOS's interpreter wrapper attempted another startup process, the
+final utility invokes the same installed framework binary directly and
+explicitly adds the existing virtual-environment site-packages.
+
+Host file reads remain allowed under the current user's permissions.
+Mach service lookup is not restricted; memory limits, separate user identity,
+container/VM isolation, and a filesystem confidentiality boundary are absent.
+No claim of comprehensive IPC denial, hostile-checkpoint containment, or
+production readiness is made. The default-allow policy needs security-owner
+assessment before any exceptional checkpoint reconstruction.
+
+No dependencies were installed, no weights were downloaded or replaced, and
+application configuration was unchanged: all three approval/verification flags
+remain false, with reviewer and license fields null. **Checkpoint loads: 0;
+prediction calls: 0; Renewi inputs processed: 0.** Runtime taxonomy, head
+verification and detection capability remain unverified.
+
+Before a loading trial, the security owner must review the tested alternative
+and a digest-bound restricted loading harness. Keep `weights_only=True`, CPU
+mapping, and the earlier symbol restriction: preparation does not authorize
+`weights_only=False`, Ultralytics' unrestricted loader, or adding more globals.
+The prior `DetectionModel` exception remains container-specific until a
+separate decision explicitly covers this alternative. An unapproved global
+must be reported and loading stopped, not automatically allowlisted.
+
+The model/rights owners must separately record a Baskarmother digest-bound
+selection and exact-weight intended-use rights, then authorize staging the
+matching artifact. The Renewi evaluation owner must supply the authorized
+5–10 representative inputs and manifest already requested below.
+**OPEN-01 remains unresolved; this preparation does not unblock STEP-02 or FR-1.**
+
+## Current model-validation gate recheck — 2026-10-03
+
+The authoritative user-input attachment supplies the approved revision-1 core
+PPE plan: STEP-02 remains blocked until OPEN-01 is resolved, and FR-2 remains
+blocked until STEP-03 records successful real-model FR-1 verification. Its
+initial repository inventory is historical context, not the current inventory:
+the inspected application HEAD is `e42b392` (`Add PPE pipeline scaffolding
+(unverified, no model loaded)`). Existing scaffolding does not satisfy model
+approval.
+
+### Results verified in this invocation
+
+| Check | Result | Evidence boundary |
+| --- | --- | --- |
+| Pinned Baskarmother artifact | In-memory acquisition matched revision `3213ed51de90cbc76e577e6944e84f7c74343526`, size **6,258,474 bytes**, SHA-256 `8714b4b2bbde95b3a07dcdbe873995e34742b5ce628464a4da232721d4691ffe`. | Existing `utils/inspect_ppe_candidates.py --self-test baskarmother` inspected inert ZIP/pickle opcodes; no checkpoint copy was saved and no object was reconstructed. |
+| Required serialized labels | ID 9 `person`, ID 4 `hardhat`, ID 6 `no-hardhat`, ID 12 `safety vest`, ID 8 `no-safety vest` all occur in the complete 17-entry literal map. | Metadata member is 104,137 bytes with 38,859 opcodes; two literal `nc: 17` fields agree, while one nonliteral `nc` reference remains uninterpreted. This is not runtime `model.names`, head verification or detection capability. |
+| Current workspace `models/best.pt` | **6,249,635 bytes**, SHA-256 `5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836`: the recorded Hafizqaim fingerprint, not Baskarmother. | `utils/verify_local_ppe_checkpoint.py` exited 1 with `Fingerprint mismatch; no inspection or loading`, before Torch import/loading. This expected refusal is not a failed inference run or a successful Baskarmother validation. |
+| Parser self-checks | **7 passed** in each invoked utility. | Inert, hand-authored parser cases only. |
+| Downloader regression checks | **25 passed in 1.12s** using the nested application virtual environment and `backend/tests/test_download_model.py`. | Synthetic downloader/approval tests, including refusal before network access; not real-model validation. |
+| Runtime availability | Host `python3.11` reports **3.11.14**. Neither `docker` nor `podman` was found on PATH. | No accessible approved container identifier or reviewed run package was established. Missing executables on PATH do not prove that no remote/container environment exists. A matching interpreter is not containment approval. |
+| Validation inputs | Bounded workspace path discovery found no JPG/JPEG/PNG, MP4/MOV/AVI/MKV/WEBM, ZIP, or filename containing `manifest` or `approval`, excluding `.git`, `.venv`, `skills`, `node_modules`, and `__pycache__`. | This is candidate-path discovery, not exhaustive proof that no external media or differently named approval record exists. No authorized Renewi sample manifest was supplied. |
+| Approval controls | `approved`, `actual_classes_verified`, and `required_classes_supported` remain false; configured reviewer/license fields remain null. | Configuration still names Hafizqaim; Baskarmother has not been adopted. |
+
+These results were collected from tool stdout; no new raw execution log was
+saved. Runtime `model.names` remains unobtained. **Renewi inputs processed: 0;
+prediction calls: 0; detection/confidence records: none.**
+
+### Concrete prerequisites and accountable actions
+
+1. **Security owner and environment operator:** identify and provide access to
+   the approved container, or separately authorize and demonstrate an isolated
+   alternative with a digest-bound reviewed loading harness, dependencies and
+   controls. The recorded conditional exception covers only `DetectionModel`
+   with Python 3.11.14, PyTorch 2.6.0 and Ultralytics 8.3.70 in an approved
+   container; it does not approve host execution or other serialized symbols.
+   If an authorized restricted run requires another unapproved global, record
+   the diagnostic and stop for a separate security decision.
+2. **PoC/model owner and rights reviewer:** record a digest-bound candidate
+   decision and accepted exact-weight intended-use rights, notices and relevant
+   upstream/training-data obligations. The existing Baskarmother review records
+   an MIT declaration, not accepted rights; this invocation did not refresh
+   license sources. Prior asserted Hafizqaim permission must not be treated as
+   Baskarmother permission or replacement approval.
+3. **Renewi/evaluation owner:** provide accessible, authorized **5–10**
+   representative images/clips and a manifest identifying inputs, positive and
+   explicit-negative helmet/vest cases, and reviewed expected observations.
+   Accuracy claims additionally require annotations and agreed acceptance
+   criteria.
+4. **Validation operator, after the above prerequisites:** stage and rehash the
+   candidate-correct artifact inside the approved environment, obtain the full
+   runtime taxonomy/head evidence, run the authorized smoke trial, and record
+   input/frame identity, settings, class IDs/names, boxes and confidences.
+   The separate annotated 100-clip evaluation is not replaced by this trial.
+
+**Disposition: OPEN-01 unresolved; STEP-02 must not proceed.** No dependencies
+were installed, no safe globals were added, no checkpoint was loaded, and no
+application source or configuration was changed by this recheck.
+
 ## Correction: digest-bound taxonomy and pickle references
 
 The statement that the recorded serialized map lacks an explicit negative-vest label applies only to Hafizqaim SHA-256 `5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836`. It does **not** apply to SHA-256 `8714b4b2bbde95b3a07dcdbe873995e34742b5ce628464a4da232721d4691ffe`, which the repository inspection utility identifies as Baskarmother. Both artifacts use the filename `best.pt` and contain 17 serialized labels, but their maps differ. Filename and class count are therefore insufficient identity evidence.
 
 ### Artifact reconciliation and origin of the disputed statement
 
-This correction rechecked the current local [checkpoint](../../models/best.pt) as inert bytes and independently rechecked the pinned Baskarmother source through a bounded, in-memory download. Neither checkpoint was unpickled or executed, and no downloaded checkpoint copy was written.
+This correction rechecked the current local checkpoint as inert bytes and independently rechecked the pinned Baskarmother source through a bounded, in-memory download. Neither checkpoint was unpickled or executed, and no downloaded checkpoint copy was written.
 
 | Verified artifact | Size and SHA-256 | Relevant literal serialized labels | Negative-vest finding |
 | --- | --- | --- | --- |
@@ -17,7 +272,7 @@ This correction rechecked the current local [checkpoint](../../models/best.pt) a
 
 The disputed paragraph is in “Requested loading and evaluation decisions — 2026-10-03”, under “Model owner: taxonomy examination cannot establish detection behavior”. That review explicitly identifies the Hafizqaim `5464…0836` artifact, and its statement is corroborated by the [complete observed serialized class list](#complete-observed-serialized-class-list), reproduced from the current local bytes. The [uploaded local checkpoint validation](#uploaded-local-checkpoint-validation--2026-10-03) and [complete observed serialized taxonomy](#complete-observed-serialized-taxonomy) concern the different Baskarmother `8714…1ffe` artifact. The ambiguity came from insufficient artifact qualification in the disputed sentence, not evidence that Baskarmother lacks the label. The original prose-generation history is not available, so no further causal claim about how the sentence was authored is established.
 
-The comparison is case-sensitive, but it expects the exact lowercase serialized spelling, not `NO-Safety Vest`. In [`utils/verify_local_ppe_checkpoint.py`](../../utils/verify_local_ppe_checkpoint.py), `main()` uses the following module-level values and expression:
+The comparison is case-sensitive, but it expects the exact lowercase serialized spelling, not `NO-Safety Vest`. In `utils/verify_local_ppe_checkpoint.py`, `main()` uses the following module-level values and expression:
 
 ```python
 EXPECTED = CANDIDATES["baskarmother"]
@@ -48,7 +303,7 @@ The current Hafizqaim `best/data.pkl` contains **eight distinct Ultralytics `GLO
 | `ultralytics.nn.modules.head.Detect` | 66345 | Referenced; no additional approval established |
 | `ultralytics.nn.modules.block.DFL` | 86095 | Referenced; no additional approval established |
 
-[`utils/inspect_ppe_candidates.py`](../../utils/inspect_ppe_candidates.py), `metadata_report()`, records literal `GLOBAL` arguments rather than a required exception manifest:
+`utils/inspect_ppe_candidates.py`, `metadata_report()`, records literal `GLOBAL` arguments rather than a required exception manifest:
 
 ```python
 globals_seen = set()
@@ -112,7 +367,7 @@ The security owner and environment operator must supply an identified approved c
 ## Requested loading and evaluation decisions — 2026-10-03
 
 This disposition addresses the five decisions in the
-[authoritative request](../../temp-attachments/orchestrator_user_input_20261003_125616_571131.txt).
+authoritative request.
 It concerns only workspace `models/best.pt`, reported as 6,249,635 bytes with
 SHA-256 `5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836`.
 Identity verification is accepted as prior recorded evidence, not reproduced
@@ -333,7 +588,7 @@ decisions above, not approval inferred from this review.
 
 **Status: proposal only; security approval, rights clearance and execution
 authorization are not established.** The
-[authoritative request](../../temp-attachments/orchestrator_user_input_20261003_124815_389824.txt)
+authoritative request
 asks for an approved, security-reviewed procedure. This document supplies a
 reviewable proposal, not that approval. It authorizes no checkpoint loading,
 inference, training, conversion, integration or model adoption. No such
@@ -350,7 +605,7 @@ restricted `torch.load(..., weights_only=True)` refusal at
 `ultralytics.nn.tasks.DetectionModel`, with no unsafe workaround or safe-global
 expansion. These are supplied observations, not a load reproduced here.
 The latest local-identity record identifies
-[`models/best.pt`](../../models/best.pt) as Hafizqaim; earlier Baskarmother
+`models/best.pt` as Hafizqaim; earlier Baskarmother
 observations concern different bytes at that path and remain historical.
 
 The [recorded complete serialized taxonomy](#complete-observed-serialized-class-list)
@@ -430,12 +685,12 @@ environment versions and the actual invocation without publishing secrets.
 Second, perform only reviewer-approved bounded inert archive/opcode inspection
 and preflight checks. Do not extract arbitrary archive paths or interpret
 pickle object/call opcodes. The
-[Hafizqaim inspector](../../utils/inspect_hafizqaim_checkpoint.py) is evidence
+Hafizqaim inspector is evidence
 of an inert parsing approach, but its main entrypoint fetches the release
 over the network; it is not an offline local loader and must not be run as
 this procedure's executable harness.
 
-The [existing local verifier](../../utils/verify_local_ppe_checkpoint.py)
+The existing local verifier
 sets `EXPECTED = CANDIDATES["baskarmother"]` and checks Baskarmother's five
 IDs/names. It therefore cannot validate Hafizqaim unchanged: it should reject
 the current Hafizqaim fingerprint before loading. Even its successful
@@ -564,7 +819,7 @@ still points to `da9e8a3f41b55e7cc3d6ce400528b0dba939ec33`.
 GitHub reports `immutable: false`; pin the digest, not merely the tag or URL.
 
 Read-only local `stat` and `shasum -a 256` checks confirm that the retained
-regular file [`models/best.pt`](../../models/best.pt) **currently matches this
+regular file `models/best.pt` **currently matches this
 Hafizqaim size and digest**, not Baskarmother. This supersedes earlier
 statements about the current contents of that path; earlier Baskarmother
 verification results remain historical observations of different bytes.
@@ -663,7 +918,7 @@ separate gates.
 
 Only this source-adjacent evidence document is updated; no Spec Builder
 artifact, generated research page or implementation plan is created or edited.
-The existing [read-only source checker](../../utils/check_dec01_primary_sources.py)
+The existing read-only source checker
 retrieved all eleven configured metadata/text sources; supplemental requests
 read pinned READMEs, mirror metadata and the upstream license. Notebook JSON
 and remote Python were inspected as inert text, never executed. Local checks
@@ -684,7 +939,7 @@ unresolved; implementation and inference remain paused.**
 
 **Disposition: retain Baskarmother as a replacement evidence lead; do not
 approve or substitute it. No inference is authorized by this assessment.**
-The [recorded implementation plan](../../kavia-docs/CodeWiki/Artifacts/Plans/ppe-core-implementation-plan.md#proposed-change-and-decisions)
+The recorded implementation plan
 requires investigation of weights-specific licensing, revision, architecture,
 class list and actual Person/PPE support; an unsuitable original candidate
 requires a documented and approved replacement before inference work.
@@ -707,7 +962,7 @@ The [pinned weight source](https://huggingface.co/baskarmother/yolov8-ppe-constr
 and [revision-specific Hub metadata](https://huggingface.co/api/models/baskarmother/yolov8-ppe-construction/revision/3213ed51de90cbc76e577e6944e84f7c74343526?blobs=true)
 identify the recorded source artifact. The
 [local validation record](#uploaded-local-checkpoint-validation--2026-10-03)
-reports that [`models/best.pt`](../../models/best.pt) matches both size and
+reports that `models/best.pt` matches both size and
 digest. Persistence is resolved; that historical match was not rerun here.
 It proves byte identity, not training lineage, loading safety or rights.
 
@@ -785,9 +1040,9 @@ Seven inert parser self-checks passed using
 `PYTHONDONTWRITEBYTECODE=1 python3 -c 'import sys; sys.path.insert(0, "utils"); from inspect_ppe_candidates import self_test; self_test()'`
 from the outer workspace root. They test metadata-parser rejection behavior,
 not architecture, detection capability, rights or full VAL-01.
-The [local verifier](../../utils/verify_local_ppe_checkpoint.py) was reviewed
+The local verifier was reviewed
 but not rerun because it includes a restricted-load attempt; the
-[primary-source checker](../../utils/check_dec01_primary_sources.py) targets
+primary-source checker targets
 hafizqaim, not Baskarmother, and was not rerun as replacement evidence.
 No weights/datasets were downloaded, no checkpoint was loaded, no model
 inference or accuracy evaluation ran, and **prediction calls for this assessment:
@@ -810,7 +1065,7 @@ acceptance are not established by static inspection.
 Primary-source refresh began at **2026-10-03 12:11:17 UTC**. All eleven
 bounded metadata/text requests returned evidence. A preceding inline shell
 request failed parsing before network execution; the successful retry used the
-[read-only source checker](../../utils/check_dec01_primary_sources.py).
+read-only source checker.
 
 | Subject | Verified observation | Limit or unresolved claim |
 | --- | --- | --- |
@@ -934,7 +1189,7 @@ application implementation, replacement decision or plan status was changed.
 - [Release-tag tree](https://api.github.com/repos/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/git/trees/da9e8a3f41b55e7cc3d6ce400528b0dba939ec33?recursive=1) and [later inspected tree](https://api.github.com/repos/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/git/trees/8f16e157b0533e5ef62bb48ca829b612bad63d3b?recursive=1).
 - [Pinned notebook](https://github.com/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/blob/8f16e157b0533e5ef62bb48ca829b612bad63d3b/workplace-safety.ipynb), [commit history](https://api.github.com/repos/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/commits?per_page=100), and [pinned demo source](https://github.com/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/blob/8f16e157b0533e5ef62bb48ca829b612bad63d3b/inference.py).
 - [Existing issue #1](https://github.com/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/issues/1), [comments API](https://api.github.com/repos/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/issues/1/comments?per_page=100), and [Space metadata](https://huggingface.co/api/spaces/hafizqaim/Workspace-Safety-Detection).
-- [Inspected release download](https://github.com/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/releases/download/v1.0.0/best.pt) and [existing inert checkpoint inspector](../../utils/inspect_hafizqaim_checkpoint.py).
+- [Inspected release download](https://github.com/hafizqaim/Workspace-Safety-Detection-using-YOLOv8/releases/download/v1.0.0/best.pt) and existing inert checkpoint inspector.
 
 ## Uploaded local checkpoint validation — 2026-10-03
 
@@ -944,7 +1199,7 @@ The user reported that `best.pt` is now in `models`. Local verification began at
 
 | Check | Observed result |
 | --- | --- |
-| Local checkpoint | [`models/best.pt`](../../models/best.pt), retained; not downloaded again or rewritten |
+| Local checkpoint | `models/best.pt`, retained; not downloaded again or rewritten |
 | Size | **6,258,474 bytes**, expected-size match |
 | SHA-256 | **`8714b4b2bbde95b3a07dcdbe873995e34742b5ce628464a4da232721d4691ffe`**, expected-digest match |
 | Reference identity | `baskarmother/yolov8-ppe-construction`, pinned revision `3213ed51de90cbc76e577e6944e84f7c74343526` |
@@ -996,7 +1251,7 @@ Reproducible local command from the outer workspace root:
 PYTHONDONTWRITEBYTECODE=1 ./Renewi_EHS_Lighthouse/.venv/bin/python utils/verify_local_ppe_checkpoint.py
 ```
 
-The new [local-only verification utility](../../utils/verify_local_ppe_checkpoint.py) reads bounded local bytes, uses the existing inert parser, inventories candidate media paths and refuses unsafe fallback loading. The corrected run reports `restricted_load_status: blocked` and exits with status 2 by design; fingerprint/static success is not overall validation success.
+The new local-only verification utility reads bounded local bytes, uses the existing inert parser, inventories candidate media paths and refuses unsafe fallback loading. The corrected run reports `restricted_load_status: blocked` and exits with status 2 by design; fingerprint/static success is not overall validation success.
 
 The existing downloader safeguard regression suite also ran from the nested application root:
 
@@ -1038,7 +1293,7 @@ The download failures were file-persistence/tool failures, not evidence that the
 
 ### Complete observed serialized taxonomy
 
-The existing [static inspection utility](../../utils/inspect_ppe_candidates.py) ran from the outer workspace root:
+The existing static inspection utility ran from the outer workspace root:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 ./Renewi_EHS_Lighthouse/.venv/bin/python utils/inspect_ppe_candidates.py --self-test baskarmother
@@ -1134,7 +1389,7 @@ Archive paths were confirmed in pinned repository metadata; their contents were 
 
 Exact training revision/image membership, checkpoint selection on validation data, use and held-out status of the test split, split-generation procedure, source grouping, per-class support and exact-checkpoint metrics remain unavailable in the inspected evidence. The dataset's CC BY 4.0 declaration and contributing-source notice do not establish all source permissions or weight rights. Other construction-dataset versions and successor-model results must not be attributed to this artifact.
 
-The [detailed dataset/evaluation investigation](../../kavia-docs/CodeWiki/Artifacts/SpecBuilder/pages/ppe-alternative-model-investigation.md#baskarmother-evaluation-data-investigation) records primary sources and evidence limits. Establishing actual testing would require a publisher run record tying the weight digest to a dataset/version, evaluated image manifest, split role, settings and results. No local inference or accuracy evaluation has occurred; static class inspection is not testing. This dataset does not replace the still-unidentified required 100-clip evaluation. No model approval, configuration change or implementation resumption is authorized.
+The detailed dataset/evaluation investigation records primary sources and evidence limits. Establishing actual testing would require a publisher run record tying the weight digest to a dataset/version, evaluated image manifest, split role, settings and results. No local inference or accuracy evaluation has occurred; static class inspection is not testing. This dataset does not replace the still-unidentified required 100-clip evaluation. No model approval, configuration change or implementation resumption is authorized.
 
 STEP-01 establishes tooling, not permission to use publicly hosted weights.
 STEP-02 must not begin until model approval is resolved. FR-2 remains blocked
@@ -1142,13 +1397,13 @@ until real-model FR-1 verification passes in STEP-03.
 
 ## Provisional Baskarmother choice, accuracy and adoption criteria
 
-This clarification follows the [authoritative requirements attachment](../../temp-attachments/orchestrator_user_input_20261003_045824_181150.txt). “Provisional choice” means prioritized for evidence review and, only after separate clearance, evaluation. It does not mean configured, selected for implementation or approved for adoption. The configured candidate remains hafizqaim and its approval/capability flags remain false.
+This clarification follows the authoritative requirements attachment. “Provisional choice” means prioritized for evidence review and, only after separate clearance, evaluation. It does not mean configured, selected for implementation or approved for adoption. The configured candidate remains hafizqaim and its approval/capability flags remain false.
 
 ### Why this candidate is provisional
 
 The candidate is `baskarmother/yolov8-ppe-construction`, revision `3213ed51de90cbc76e577e6944e84f7c74343526`, `best.pt`, SHA-256 `8714b4b2bbde95b3a07dcdbe873995e34742b5ce628464a4da232721d4691ffe`. Supplied prior fingerprint-verified static inspection reports `person`, `hardhat`, `no-hardhat`, `safety vest` and `no-safety vest`. Those labels align conditionally with the five required canonical classes. The declared YOLOv8n architecture, MIT metadata and comparatively explicit linked dataset documentation make it a useful first review lead. They do not establish accepted exact-weight rights, valid output heads, safe loading, usable detections or superior accuracy.
 
-No operational evaluation has occurred. The static finding is attributed to the supplied prior evidence, not reproduced here. The [inspection utility](../../utils/inspect_ppe_candidates.py) checks artifact identity and inert serialized metadata; it is not a runtime detector or accuracy evaluator. Licensing scope, publisher authority, initialization and training-data lineage, and applicable upstream obligations remain unresolved.
+No operational evaluation has occurred. The static finding is attributed to the supplied prior evidence, not reproduced here. The inspection utility checks artifact identity and inert serialized metadata; it is not a runtime detector or accuracy evaluator. Licensing scope, publisher authority, initialization and training-data lineage, and applicable upstream obligations remain unresolved.
 
 ### Validate the detector for the specific tasks
 
@@ -1183,7 +1438,7 @@ Present status: rights acceptance, operational model results, authoritative data
 
 ## Current model options against FR-1 and FR-2
 
-This assessment uses the [authoritative attachment for this request](../../temp-attachments/orchestrator_user_input_20261003_082818_476535.txt), the supplied fingerprint-verified checkpoint findings, and the recorded licensing review. It supersedes earlier statements below that checkpoint labels had not yet been inspected, but only at the static-metadata evidence level. Earlier sections retain their historical investigation context. No inspection, download, unpickling, inference, evaluation or test run was repeated for this assessment.
+This assessment uses the authoritative attachment for this request, the supplied fingerprint-verified checkpoint findings, and the recorded licensing review. It supersedes earlier statements below that checkpoint labels had not yet been inspected, but only at the static-metadata evidence level. Earlier sections retain their historical investigation context. No inspection, download, unpickling, inference, evaluation or test run was repeated for this assessment.
 
 ### Baskarmother versus Hansung Cho: present evaluation priority
 
@@ -1212,7 +1467,7 @@ This recommendation uses existing records and supplied findings only; no inspect
 | `hafizqaim/Workspace-Safety-Detection-using-YOLOv8`, `v1.0.0/best.pt` | Person, helmet, negative helmet and positive vest; no explicit negative vest in the inspected metadata | No accepted weight grant | Does not cover all five classes in the inspected taxonomy; licensing clarification or renaming cannot create negative vest |
 | `keremberke/yolov8m-protective-equipment-detection` | Published taxonomy lacks Person and both vest classes; no supplied checkpoint verification | No accepted weight grant; dataset CC BY 4.0 is separate | Not a complete fallback on present evidence; taxonomy mapping alone cannot close those gaps |
 
-The pinned revisions, sizes and fingerprints for the four alternatives are recorded in the [research and inspection utility](../../utils/inspect_ppe_candidates.py). Baskarmother, Hansung and SafetyVision are checked against recorded size/SHA-256; Snehil's published identity check uses size and Git blob SHA-1, not an independently published SHA-256 reference. The supplied findings are incorporated as prior inspection results, not independently reproduced measurements here. No persisted raw inspection report was supplied.
+The pinned revisions, sizes and fingerprints for the four alternatives are recorded in the research and inspection utility. Baskarmother, Hansung and SafetyVision are checked against recorded size/SHA-256; Snehil's published identity check uses size and Git blob SHA-1, not an independently published SHA-256 reference. The supplied findings are incorporated as prior inspection results, not independently reproduced measurements here. No persisted raw inspection report was supplied.
 
 The utility parses literal serialized names and class-count metadata as inert ZIP/pickle opcodes; it never reconstructs or executes model objects. Thus static label presence is stronger than a model-card claim, but does not validate tensors/output heads, certify architecture or safe loading, or demonstrate detections. Conditional label normalization may reconcile Hardhat with `helmet` and explicit NO-Hardhat with `no_helmet`; it cannot manufacture missing classes. Absence of a positive PPE detection must not become a negative detection.
 
@@ -1377,14 +1632,15 @@ Do not repeat identical public-source checks without new owner evidence or a
 changed authoritative source. Do not enable approval on unanswered requests,
 dataset licensing, or notebook declarations.
 
-## Authorized alternative-model investigation — 2026-10-03
+## Alternative-model investigation (authorization not recorded) — 2026-10-03
 
-The user authorized investigation of alternatives, not selection, substitution,
+A prior session reports an investigation of alternatives; no authorization is
+recorded in this repository. It covered investigation only, not selection, substitution,
 checkpoint loading, or implementation. The unchanged requirements still require
 YOLOv8, accepted exact-weight licensing, direct Person detections, and explicit
 positive/negative helmet and vest classes.
 
-The [alternative-model research](../../kavia-docs/CodeWiki/Artifacts/SpecBuilder/pages/ppe-alternative-model-investigation.md)
+The alternative-model research
 records five primary-source investigations, pinned revisions, published artifact
 sizes/digests, conditional class mappings, and unresolved rights/capability
 evidence. Baskarmother and Hansung Cho declare MIT and all five labels; Hansung's
@@ -1407,7 +1663,7 @@ checks.
 
 ## Targeted Baskarmother evidence — 2026-10-03
 
-The focused follow-up in the [alternative-model research](../../kavia-docs/CodeWiki/Artifacts/SpecBuilder/pages/ppe-alternative-model-investigation.md#targeted-baskarmother-investigation--2026-10-03)
+The focused follow-up in the alternative-model research
 rechecked Baskarmother's pinned model card, revision-specific artifact metadata,
 commit history, and discussions. Revision
 `3213ed51de90cbc76e577e6944e84f7c74343526` still identifies `best.pt` as
@@ -1441,7 +1697,7 @@ and no inference, tests, or evaluation were run. Implementation remains paused.
 
 ## Targeted Hansung Cho evidence — 2026-10-03
 
-The [targeted research](../../kavia-docs/CodeWiki/Artifacts/SpecBuilder/pages/ppe-alternative-model-investigation.md#targeted-hansung-cho-investigation--2026-10-03)
+The targeted research
 rechecked pinned Hub metadata/card, upload history, discussions, the linked
 GitHub tree, training YAML, notebook JSON/text, and demo sources. Revision
 `ac0027bd38bc619d5ce4f52b4cc01beb87d8b958` identifies `best.pt` as
@@ -1487,7 +1743,7 @@ remains paused.
 
 ## How to assess suitability for PEOPLE/PPE worker safety
 
-This guidance applies the [authoritative requirements](../../temp-attachments/orchestrator_user_input_20261003_045824_181150.txt) to the existing candidate findings. It is a selection checklist, not an implementation plan, model approval, or authorization to obtain or load weights. The intended PoC must support FR-1 person/PPE detection and compliance, FR-2 restricted-zone incursion, and reproducible metrics/provenance. A generic construction-safety label or a high published aggregate score is not sufficient.
+This guidance applies the authoritative requirements to the existing candidate findings. It is a selection checklist, not an implementation plan, model approval, or authorization to obtain or load weights. The intended PoC must support FR-1 person/PPE detection and compliance, FR-2 restricted-zone incursion, and reproducible metrics/provenance. A generic construction-safety label or a high published aggregate score is not sufficient.
 
 Separate documentary eligibility, operational suitability, and adoption. Documentary eligibility asks whether accepted rights and trustworthy architecture/taxonomy evidence cover the exact artifact. Operational suitability requires later separately authorized verification and evaluation. Adoption requires an explicit documented owner decision and any necessary plan reapproval. Passing one stage does not imply the others have passed. Implementation remains blocked at STEP-01; FR-2 must still wait for real-model FR-1 verification.
 
@@ -1513,7 +1769,7 @@ The attachment specifies required capabilities and metric fields but does not se
 
 ### Comparing Baskarmother and Hansung Cho on the existing evidence
 
-Use the [saved alternative-model findings](../../kavia-docs/CodeWiki/Artifacts/SpecBuilder/pages/ppe-alternative-model-investigation.md) as evidence, not a leaderboard. Their different documentary strengths identify different follow-up questions. There is presently no common verified benchmark on which to choose the more accurate or faster model.
+Use the saved alternative-model findings as evidence, not a leaderboard. Their different documentary strengths identify different follow-up questions. There is presently no common verified benchmark on which to choose the more accurate or faster model.
 
 | Comparison dimension | Baskarmother | Hansung Cho | Meaning for selection |
 | --- | --- | --- | --- |
@@ -1631,11 +1887,11 @@ This reconciliation approves neither model and authorizes no replacement, second
 
 ## Baskarmother exact-weight licensing review
 
-The [detailed licensing review](../../kavia-docs/CodeWiki/Artifacts/SpecBuilder/pages/ppe-alternative-model-investigation.md#baskarmother-exact-weight-licensing-and-upstream-review) covers `baskarmother/yolov8-ppe-construction`, revision `3213ed51de90cbc76e577e6944e84f7c74343526`, `best.pt`, 6,258,474 bytes, SHA-256 `8714b4b2bbde95b3a07dcdbe873995e34742b5ce628464a4da232721d4691ffe`. It separates established published terms, supplied static-inspection findings, unresolved lineage and intended-use questions. It is not legal advice, a definitive legal determination, or a model adoption decision.
+The detailed licensing review covers `baskarmother/yolov8-ppe-construction`, revision `3213ed51de90cbc76e577e6944e84f7c74343526`, `best.pt`, 6,258,474 bytes, SHA-256 `8714b4b2bbde95b3a07dcdbe873995e34742b5ce628464a4da232721d4691ffe`. It separates established published terms, supplied static-inspection findings, unresolved lineage and intended-use questions. It is not legal advice, a definitive legal determination, or a model adoption decision.
 
 The re-read pinned publisher card and revision-specific Hub metadata confirm `license: mit`, `Base Model: yolov8n`, the linked dataset and artifact identity. The inspected files supply no standalone LICENSE, complete MIT text/copyright notice, exact initialization identity or upstream reconciliation. Missing a LICENSE does not itself invalidate the declaration; exact-weight scope and publisher authority remain insufficiently established for acceptance. The canonical MIT terms permit broad reuse subject to retaining copyright and permission notices and disclaim warranties. Those terms describe the declared license; they do not independently establish a grant from the publisher or cure missing upstream authority.
 
-The supplied prior-inspection findings report matching size/SHA-256 and literal serialized presence of `person`, `hardhat`, `no-hardhat`, `safety vest` and `no-safety vest`. The [existing inspection utility](../../utils/inspect_ppe_candidates.py) reads bounded ZIP/pickle-opcode metadata without unpickling. This later evidence improves exact-artifact label evidence beyond the earlier public-text stage, but does not establish model-head validity, architecture certification, usable Person boxes, actual inference, safe deserialization or rights. It is attributed to the supplied findings, not independently reproduced here; no persisted raw inspection report was supplied. Earlier uninspected-byte/class statements describe their historical investigation stage.
+The supplied prior-inspection findings report matching size/SHA-256 and literal serialized presence of `person`, `hardhat`, `no-hardhat`, `safety vest` and `no-safety vest`. The existing inspection utility reads bounded ZIP/pickle-opcode metadata without unpickling. This later evidence improves exact-artifact label evidence beyond the earlier public-text stage, but does not establish model-head validity, architecture certification, usable Person boxes, actual inference, safe deserialization or rights. It is attributed to the supplied findings, not independently reproduced here; no persisted raw inspection report was supplied. Earlier uninspected-byte/class statements describe their historical investigation stage.
 
 The runtime dependency Ultralytics 8.3.70 has AGPL version 3 license text. Sections 4–6 address applicable notices and source conditions when conveying covered works; section 13 addresses modified versions supporting remote network interaction. Section 2 permits running the unmodified Program and covered works not conveyed, subject to the license remaining in force, and covers output only if its content constitutes a covered work. These conditional terms must not be simplified into automatic publication of every private project, trained model or detection output. Separately, Ultralytics' current guidance asserts AGPL/Enterprise obligations for trained/fine-tuned models and private/internal/R&D use, even training from scratch. That is the vendor's position, not an independent ruling on Baskarmother's checkpoint. Neither the MIT declaration nor the vendor FAQ conclusively resolves covered-work scope.
 
@@ -1649,11 +1905,11 @@ Primary sources and section-level analysis are linked in the detailed review: th
 
 ## Verifying Baskarmother against FR-1 and FR-2
 
-This section applies the [authoritative project requirements](../../temp-attachments/orchestrator_user_input_20261003_045824_181150.txt) specifically to Baskarmother. It explains acceptance evidence, not implementation steps, permission to execute the model, or approval for adoption. The attachment requires public open weights, explicitly verified permissive/acceptable licensing, YOLOv8, five canonical classes, direct Person boxes, person-level PPE compliance and configured restricted-zone detection. Baskarmother is an alternative evidence lead, not the attachment's named preferred model. Its documentary review priority does not establish better accuracy or runtime performance.
+This section applies the authoritative project requirements specifically to Baskarmother. It explains acceptance evidence, not implementation steps, permission to execute the model, or approval for adoption. The attachment requires public open weights, explicitly verified permissive/acceptable licensing, YOLOv8, five canonical classes, direct Person boxes, person-level PPE compliance and configured restricted-zone detection. Baskarmother is an alternative evidence lead, not the attachment's named preferred model. Its documentary review priority does not establish better accuracy or runtime performance.
 
 ### Completed checks and their evidence limits
 
-The artifact under discussion is `baskarmother/yolov8-ppe-construction`, revision `3213ed51de90cbc76e577e6944e84f7c74343526`, `best.pt`, 6,258,474 bytes, SHA-256 `8714b4b2bbde95b3a07dcdbe873995e34742b5ce628464a4da232721d4691ffe`. Existing records identify the public source, pinned card and expected artifact identity. The supplied prior static inspection reports matching size/SHA-256 and literal serialized presence of all five required labels. This invocation has not reproduced that inspection; no persisted raw inspection report was supplied. The [inspection utility](../../utils/inspect_ppe_candidates.py) documents the fingerprint and inert-opcode method, not a saved successful run.
+The artifact under discussion is `baskarmother/yolov8-ppe-construction`, revision `3213ed51de90cbc76e577e6944e84f7c74343526`, `best.pt`, 6,258,474 bytes, SHA-256 `8714b4b2bbde95b3a07dcdbe873995e34742b5ce628464a4da232721d4691ffe`. Existing records identify the public source, pinned card and expected artifact identity. The supplied prior static inspection reports matching size/SHA-256 and literal serialized presence of all five required labels. This invocation has not reproduced that inspection; no persisted raw inspection report was supplied. The inspection utility documents the fingerprint and inert-opcode method, not a saved successful run.
 
 | Check already supported | Evidence level | What it does not establish |
 | --- | --- | --- |
