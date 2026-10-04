@@ -75,8 +75,8 @@ def test_json_is_versioned_complete_and_deterministic():
     a, b = analyze(raw), analyze(list(reversed(raw)))
     ja, jb = an.to_json(a), an.to_json(b)
     d = json.loads(ja)
-    assert d["schema_version"] == "1.1" and d["frame_id"] == "f1" and d["timestamp"] == 1.25
-    assert set(d) == {"schema_version", "frame_id", "timestamp", "width", "height", "detections", "people", "unassigned_ppe", "zone_incursions", "rules"}
+    assert d["schema_version"] == "1.2" and d["frame_id"] == "f1" and d["timestamp"] == 1.25
+    assert set(d) == {"schema_version", "frame_id", "timestamp", "width", "height", "detections", "people", "unassigned_ppe", "zone_incursions", "rules", "events"}
     assert d["people"][0]["state"] == "UNKNOWN" and d["people"][0]["index"] == 0
     assert json.loads(jb)["people"] == d["people"] and json.loads(jb)["rules"] == d["rules"]     # model output order is irrelevant
 

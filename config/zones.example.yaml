@@ -1,5 +1,8 @@
 # EXAMPLE ONLY: placeholder coordinates. Replace with the real polygon per demo clip.
 # Points are [x, y] pixels in the frame, in order around the zone.
+# Use the filename stem as the key, or pass --clip-id. Do not repeat the first vertex.
+# source_size is optional but recommended; mismatches fail instead of rescaling.
 clips:
   demo_clip_1:
+    source_size: [1920, 1080]  # EXAMPLE ONLY; replace with the reviewed source resolution
     polygon: [[100, 200], [400, 200], [400, 500], [100, 500]]

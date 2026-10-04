@@ -1,5 +1,13 @@
 # Renewi EHS Lighthouse — PPE PoC
 
+## S12 zone integration
+
+Both local CLI runners support per-clip source-pixel zones and frame-local
+combined PPE/zone observations. See [S12 usage and validation](docs/s12-zone-validation.md)
+for commands, schema 1.2, the focused synthetic test set (run the full suite with `pytest` for the current count), and the
+**blocked real VAL-04 fixture gate**. Older foundation-status sections below
+are historical and do not describe the current CLI implementation.
+
 Local Python backend foundation for PEOPLE/PPE worker safety. STEP-01 provides
 an isolated runtime and provenance-gated model download tooling. Model inference, metrics
 evaluation, and HTTP endpoints are not implemented. Pipeline scaffolding under

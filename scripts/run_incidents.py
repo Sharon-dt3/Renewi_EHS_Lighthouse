@@ -46,15 +46,21 @@ def main(argv=None):
     ap.add_argument("--checkpoint", type=Path, required=True); ap.add_argument("--video", type=Path, required=True)
     ap.add_argument("--out", type=Path, required=True); ap.add_argument("--rules", type=Path, default=REPO / "config" / "rules.yaml")
     ap.add_argument("--config", type=Path, default=REPO / "config" / "classes.yaml"); ap.add_argument("--device", default="cpu")
+    ap.add_argument("--zones", type=Path, help="Per-clip source-pixel polygon YAML; omitted = PPE only")
+    ap.add_argument("--clip-id", help="Zone config key (default: video filename stem)")
     a = ap.parse_args(argv)
-    rules = load_rules(a.rules)
+    if a.clip_id and not a.zones:
+        ap.error("--clip-id requires --zones")
     import cv2
     import run_inference as ri
+    zone = ri.load_zone_for_source(a.zones, a.clip_id or a.video.stem, a.video) if a.zones else None   # before any model is loaded
+    rules = load_rules(a.rules)
     from ppe.smoothing import SustainedDetector
     from ppe.analysis import FrameAnalyzer, to_dict
     from ppe.yolo_detector import load_yolo_detector
     detector, cmap = load_yolo_detector(a.checkpoint, a.config, a.device, 640, rules["min_positive_confidence"])
-    analyzer = FrameAnalyzer(detector, cmap, min_confidence=rules["min_positive_confidence"], min_negative_confidence=rules["min_negative_confidence"])
+    analyzer = FrameAnalyzer(detector, cmap, min_confidence=rules["min_positive_confidence"], min_negative_confidence=rules["min_negative_confidence"],
+                             zone_detector=zone)
     index = {v: k for k, v in cmap.labels.items()}
     det = SustainedDetector(rules["hold_seconds"], rules["max_gap_seconds"])
     out = a.out.resolve(); (out / "annotated").mkdir(parents=True, exist_ok=True)
@@ -70,11 +76,14 @@ def main(argv=None):
         for p in result.people:
             states[p.state] += 1
         new = det.update(t, active, fid); incidents += new
-        rows.append({"t": round(t, 2), "people": len(result.people), "states": [p.state for p in result.people], "naive_violation": naive, "active_rules": sorted(active), "incidents_raised": [i.rule for i in new]})
+        analysis = to_dict(result)
+        rows.append({"t": round(t, 2), "people": len(result.people), "states": [p.state for p in result.people],
+                     "width": w, "height": h, "person_observations": analysis["people"], "events": analysis["events"],
+                     "naive_violation": naive, "active_rules": sorted(active), "incidents_raised": [i.rule for i in new]})
         if naive or active or new:
             recs = ri.detections_to_records([[d.box.x1, d.box.y1, d.box.x2, d.box.y2] for d in result.detections], [d.confidence for d in result.detections],
                                             [index[d.label] for d in result.detections], dict(cmap.labels), w, h)
-            cv2.imwrite(str(out / "annotated" / f"{fid}.jpg"), ri.draw(frame, recs, to_dict(result)["people"]))
+            cv2.imwrite(str(out / "annotated" / f"{fid}.jpg"), ri.draw(frame, recs, analysis["people"]))
     n = len(rows)
     summary = {"video": a.video.name, "checkpoint_sha256": cmap.checkpoint_sha256, "rules": rules, "frames_sampled": n,
                "frames_flagged_naive": naive_frames, "frames_flagged_by_pipeline": pipe_frames,

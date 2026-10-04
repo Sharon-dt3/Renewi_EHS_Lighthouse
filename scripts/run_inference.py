@@ -53,7 +53,8 @@ def draw(image_bgr, records, people=None):
     img = image_bgr.copy()
     for p in people or []:
         x1, y1, x2, y2 = (int(v) for v in p["box"]); col = STATE_COLORS.get(p["state"], (255, 255, 255))[::-1]
-        cv2.putText(img, p["state"], (x1 + 3, min(img.shape[0] - 4, y2 - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, col, 2, cv2.LINE_AA)
+        text = p["state"] + (" + ZONE_INCURSION" if p.get("zone_incursion") else "")
+        cv2.putText(img, text, (x1 + 3, min(img.shape[0] - 4, y2 - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, col, 2, cv2.LINE_AA)
     for r in records:
         x1, y1, x2, y2 = (int(v) for v in r["xyxy"]); col = COLORS.get(r["class"], (255, 255, 255))[::-1]
         cv2.rectangle(img, (x1, y1), (x2, y2), col, 2)
@@ -81,6 +82,31 @@ def frames_from_video(path, every_seconds):
     cap.release()
 
 
+def load_zone_for_source(zones_path, clip_id, source_path):
+    """Load the clip's zone and check it against the real source frame size BEFORE any model is loaded.
+    Exits with one clear line instead of a traceback."""
+    import cv2
+    from ppe.zone import ZoneIncursionDetector
+    from ppe.zone_config import ZoneConfigError, load_zone
+    try:
+        zone = load_zone(zones_path, clip_id)
+        if Path(source_path).suffix.lower() in VID_EXT:
+            cap = cv2.VideoCapture(str(source_path))
+            w, h = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            cap.release()
+        else:
+            img = cv2.imread(str(source_path))
+            if img is None:
+                raise ValueError(f"cannot read {source_path}")
+            h, w = img.shape[:2]
+        if not (w and h):
+            raise ValueError(f"cannot determine the frame size of {source_path}")
+        zone.validate_frame(w, h)
+    except (ZoneConfigError, ValueError) as error:
+        sys.exit(f"zone error for clip '{clip_id}': {error}")
+    return ZoneIncursionDetector(zone)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", type=Path, required=True); ap.add_argument("--input", type=Path, required=True)
@@ -88,7 +114,14 @@ def main(argv=None):
     ap.add_argument("--conf", type=float, default=0.25); ap.add_argument("--imgsz", type=int, default=640)
     ap.add_argument("--device", default="cpu"); ap.add_argument("--every-seconds", type=float, default=2.0)
     ap.add_argument("--max-items", type=int, default=0, help="0 = no limit")
+    ap.add_argument("--zones", type=Path, help="Per-clip source-pixel polygon YAML; omitted = PPE only")
+    ap.add_argument("--clip-id", help="Zone config key (default: input filename stem)")
     a = ap.parse_args(argv)
+    if a.clip_id and not a.zones:
+        ap.error("--clip-id requires --zones")
+    if a.zones and a.input.is_dir():
+        ap.error("--zones requires one clip or source image, not an image directory")
+    zone = load_zone_for_source(a.zones, a.clip_id or a.input.stem, a.input) if a.zones else None
     import cv2
     out = a.out.resolve()
     for bad in ("models", "raw_css_dataset", "derived_ppe5", "weights"):
@@ -99,7 +132,8 @@ def main(argv=None):
     from ppe.yolo_detector import load_yolo_detector
     rules = yaml.safe_load((REPO / "config" / "rules.yaml").read_text())
     detector, cmap = load_yolo_detector(a.checkpoint, a.config, a.device, a.imgsz, a.conf)
-    analyzer = FrameAnalyzer(detector, cmap, min_confidence=a.conf, min_negative_confidence=max(a.conf, rules["min_negative_confidence"]))
+    analyzer = FrameAnalyzer(detector, cmap, min_confidence=a.conf, min_negative_confidence=max(a.conf, rules["min_negative_confidence"]),
+                             zone_detector=zone)
     index = {v: k for k, v in cmap.labels.items()}
     (out / "annotated").mkdir(parents=True, exist_ok=True); (out / "pred_txt").mkdir(exist_ok=True)
 
