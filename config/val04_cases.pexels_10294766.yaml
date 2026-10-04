@@ -1,0 +1,16 @@
+# VAL-04 expected cases for the Pexels clip (draft table docs/s12-expected-cases.draft.md; zone approved 2026-10-04).
+# Positions were read BY EYE from the video, without model output. `feet` is approximate (about +-60 px).
+# A case matches when the system's person nearest to `feet` (within tolerance_px) is on the expected side.
+clip: pexels_10294766_1080p
+clip_sha256: 53734aaf05d235e72e44bdac3c7164c9906e8cd2305a804b07f0e1f646a1af6c
+zones_file: config/zones.reviewed.yaml
+tolerance_px: 150
+time_tolerance_s: 0.13
+cases:
+  - {id: O1,  t: 2.0,  expected: outside, feet: [940, 960],  worker: "large bent-over worker, grey sweatshirt and yellow vest, centre"}
+  - {id: O2,  t: 10.0, expected: outside, feet: [1050, 860], worker: "crouching worker, navy jacket with green logo vest, centre-left"}
+  - {id: O2b, t: 10.25, expected: outside, feet: [1050, 860], worker: "same navy-jacket worker, next sampled frame"}
+  - {id: O3,  t: 12.0, expected: outside, feet: [1050, 830], worker: "same navy-jacket worker, crouching"}
+  - {id: I1,  t: 10.0, expected: inside,  feet: [1430, 670], worker: "crouching worker, yellow helmet and vest, right of centre"}
+  - {id: I2,  t: 8.0,  expected: inside,  feet: [1475, 705], worker: "standing man in white T-shirt, background"}
+  - {id: I3,  t: 14.0, expected: inside,  feet: [1520, 650], worker: "crouching worker, yellow helmet, right"}

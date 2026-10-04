@@ -1,0 +1,9 @@
+# APPROVED TEST FIXTURE ZONE (a stand-in, not a real restricted area).
+# Approved by: project owner (name not recorded), 2026-10-04, as a test fixture for S12 / VAL-04 only.
+# Proposed by the assistant from measured worker positions; reviewed via overlay images in reports/zones/pexels_clip1_candidate/.
+# NOT approved: evaluation use of the Pexels clip (licence reviewer still to confirm), and any claim that this marks a real hazard.
+# Points are [x, y] source-frame pixels in 1920x1080, in order around the zone. Do not repeat the first vertex.
+clips:
+  pexels_10294766_1080p:
+    source_size: [1920, 1080]
+    polygon: [[1250, 560], [1920, 520], [1920, 900], [1180, 900]]

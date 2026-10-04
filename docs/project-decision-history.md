@@ -69,3 +69,9 @@ Recorded risk acceptance, so it is not forgotten:
 - `restricted_load` moved to `ppe/restricted_load.py`; `scripts/restricted_load.py` is a compatibility shim.
 - Behaviour unchanged by the refactor: the Pexels clip (63 frames at 4 fps) still gives 17 naive flags, 4 pipeline flags, 0 incidents; the 26 test photos give the same detection counts.
 - **Open design question found while closing S11:** rule flags are derived from the combined five-state verdict, so a worker with an explicit strong `no_safety_vest` but no helmet detection is `UNKNOWN` and raises no rule. That follows the plan's text (incomplete combinations are UNKNOWN) but under-reports. Option: derive rule flags from per-item verdicts (a vest violation is flagged whenever the vest evidence is explicitly negative, whatever the helmet status) while keeping the five-state label for display. Awaiting the owner's decision.
+
+## 12. S12 partial validation (2026-10-04)
+- Owner approved a **stand-in test zone** for the Pexels clip (`config/zones.reviewed.yaml`) and the draft expected-cases table as the basis for a partial check.
+- Partial VAL-04 run: 6 MATCH, 0 MISMATCH, 1 NOT_DETECTED, constructed boundary MATCH. Record: `docs/val04-partial-pexels.md`.
+- New outcome category **NOT_DETECTED** keeps model misses separate from zone-logic errors.
+- S12 is **implemented, partially validated**. Still open: the combined PPE-plus-zone case (needs a violator clip), evaluation-use licence, independent table review.
