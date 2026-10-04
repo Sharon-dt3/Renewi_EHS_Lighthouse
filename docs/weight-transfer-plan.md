@@ -41,6 +41,9 @@ number of classes. Only that last class convolution depends on class count.
 | Class branch (`cv3`), all layers except the last conv | Copy unchanged | Same shapes for any `nc` |
 | Class branch last conv (17 to 5 outputs) | **Re-built, see options** | Output size changes |
 
+**Route update (2026-10-04, `docs/weights-licence-decision.md`): the main training path is Option C (COCO-pretrained YOLOv8n)** because the Hafizqaim
+weights have no licence. Options A and B stay documented and are used only if a Hafizqaim licence is granted and loading is authorized (OPEN-08).
+
 Options for the last class convolution (`cv3` final conv, one per detection scale; weight and bias):
 - **Option A (recommended): seeded initialisation.** Copy the source rows for classes 14, 12, 13 and 16 into
   target rows 0, 1, 2 and 3. Initialise row 4 (no_safety_vest) with Ultralytics' default class-bias
@@ -124,7 +127,7 @@ the transfer check passes and the checkpoint hash is unchanged.
 
 ## 9. Gates (all required before S8)
 1. Owner approval of this document.
-2. Weights licence resolved for fine-tuning and intended use (OPEN-01).
+2. Weights rights resolved for the weights that will actually be used (OPEN-01): decision made 2026-10-04 (COCO main path, Hafizqaim only if licensed); **still open until the rights reviewer approves the Ultralytics and COCO-weights terms**.
 3. Security authorization of the loading and training harness (OPEN-08).
 4. Acceptance thresholds agreed (OPEN-07): **met 2026-10-04**.
 5. Explicit user authorization to start training (S8).

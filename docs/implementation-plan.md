@@ -88,7 +88,7 @@ C-01 zero Renewi footage; C-02 single builder, five-day budget (see risk R-07); 
 | ID | Decision | Status |
 | --- | --- | --- |
 | ADR-001 | Canonical five-class taxonomy and naming (above) | Proposed |
-| ADR-002 | **Fine-tune Hafizqaim for five classes** rather than infer NO-Safety Vest from absence or substitute another model. A missing vest detection is never negative evidence; conflicts or insufficient evidence give `UNKNOWN` | Proposed. Needs approval |
+| ADR-002 | **Fine-tune Hafizqaim for five classes** rather than infer NO-Safety Vest from absence or substitute another model. A missing vest detection is never negative evidence; conflicts or insufficient evidence give `UNKNOWN` | Proposed. Needs approval | **Update 2026-10-04:** the main path is a COCO-pretrained start because the Hafizqaim weights are unlicensed; Hafizqaim stays a comparison run if licensed.
 | ADR-003 | `/infer` contract: image upload (multipart) for the PoC, plus a server-side `clip_id` pointer for demo clips. No client-supplied file paths or URLs | Proposed. Architecture lists this as undecided |
 | ADR-004 | Event transport to UI: **SSE** (one-directional, simple, no extra dependency) with polling fallback. Alternatives: WebSocket, polling | Proposed. Architecture ADR-001 is undecided |
 | ADR-005 | Security: app-level Basic auth and socket-peer IP allow-list on the backend; HTTPS and a reverse proxy covering the frontend at the deployment boundary; forwarding headers ignored unless a trusted-proxy policy is added | Proposed |
@@ -185,7 +185,7 @@ Acceptance criteria AC-01 to AC-07 from revision 1 are unchanged. New: **AC-08**
 
 | ID | Item | Owner | Required before |
 | --- | --- | --- | --- |
-| OPEN-01 | Exact-weights licence for Hafizqaim covering fine-tuning and intended use | PoC/model owner and rights reviewer | S8 |
+| OPEN-01 | **Route decided 2026-10-04** (`docs/weights-licence-decision.md`): request a licence from the Hafizqaim maintainer (draft in `docs/rights-request-hafizqaim.md`, not sent) and train from COCO-pretrained YOLOv8n meanwhile. **Gate still open** until the rights reviewer approves the weights actually used (Ultralytics AGPL-3.0/enterprise and COCO-weights terms) | PoC/model owner and rights reviewer | S8 |
 | OPEN-02 | Source, license and annotate an independent evaluation set (at least 100 images from at least 20 clips or sites, at least 50 instances per target class); CSS v27's 61 clean held-out photos are not enough. See `docs/evaluation-set-guidelines.md` | Dataset owner | S9 and any "100-clip" claim |
 | OPEN-03 | Licensed demo clips and per-clip zone polygons | PoC owner | S10 fixtures, S12, S21 |
 | OPEN-04 | Plans-location resolver | Documentation platform owner | Canonical publication |
