@@ -82,3 +82,8 @@ Recorded risk acceptance, so it is not forgotten:
 - Hazard found and handled: uvicorn's default proxy-header handling lets `X-Forwarded-For` rewrite the peer from 127.0.0.1; the launcher passes `--no-proxy-headers` and a test proves both sides.
 - S15 closed as a library (acceptance criteria met). Wiring to the API and ledger is S16/S17.
 - Not done and recorded: G3 review, HTTPS, rate limiting, named users (SSO).
+
+## 14. S14 close-out (2026-10-04)
+Gaps listed after the first S14 build were closed in code: named users with scrypt hashes and an audit trail (`PPE_USERS_FILE`, `scripts/make_user.py`), a per-peer failed-login lockout (429), TLS serving with the launcher refusing unencrypted non-loopback binds, and response hardening headers.
+A test (no plaintext password in the settings repr) caught a real flaw during this work: bootstrap passwords were reachable from the settings object; they are now hidden from repr and held only in the redaction list.
+Left to people: **G3 sign-off** (review package: `docs/g3-security-review.md`) and a production certificate or reverse proxy (S21).

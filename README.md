@@ -5,8 +5,9 @@
 The bounded multipart `/infer` API and readiness endpoint wrap the same S11
 pipeline as the CLI. See [S13 setup and safety limits](docs/s13-inference-api.md)
 and the published [G1 OpenAPI contract](docs/openapi.json).
-S14 security is implemented (Basic auth, IP/CIDR allow-list, supervisor/read-only roles); see
-[S14 security](docs/s14-security.md). Local use only until HTTPS is in place.
+S14 security is implemented (named users with hashed passwords, IP/CIDR allow-list, supervisor/read-only roles,
+lockout, audit trail, HTTPS serving); see [S14 security](docs/s14-security.md). G3 sign-off pending
+([review package](docs/g3-security-review.md)); keep it on localhost until HTTPS and G3 are in place.
 
 ## S12 zone integration
 

@@ -423,7 +423,7 @@
     },
     "securitySchemes": {
       "basicAuth": {
-        "description": "HTTP Basic. Two roles: supervisor (may upload) and read-only (may not). HTTPS is required beyond localhost.",
+        "description": "HTTP Basic with named users. Two roles: supervisor (may upload) and read-only (may not). HTTPS is required beyond localhost.",
         "scheme": "basic",
         "type": "http"
       }
@@ -477,6 +477,23 @@
               }
             },
             "description": "Peer address not allow-listed, or the credential's role may not perform this operation."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Too many failed logins from this peer; retry after the Retry-After seconds.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
           },
           "503": {
             "content": {
@@ -610,6 +627,23 @@
               }
             },
             "description": "Invalid fields, clip identifier, image or clip dimensions."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Too many failed logins from this peer; retry after the Retry-After seconds.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
           },
           "500": {
             "content": {

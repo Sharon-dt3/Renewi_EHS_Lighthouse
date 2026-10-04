@@ -1,4 +1,5 @@
 """S13 local-only inference API. Start from the application root with backend.app:app."""
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -10,7 +11,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.models import ErrorResult, HealthResult, InferResult
 from backend.service import InferenceService, load_settings
-from backend.security import SecurityMiddleware, SecuritySettings, install_redaction, load_security
+from backend.security import (ENV_AUDIT_LOG, SecurityMiddleware, SecuritySettings, configure_audit_file, install_redaction,
+                              load_security)
 
 MULTIPART_OVERHEAD = 64 * 1024
 
@@ -107,6 +109,7 @@ def create_app(service: InferenceService | None = None, security: SecuritySettin
     async def lifespan(application):
         application.state.security = security or load_security()          # raises SecurityConfigError: startup aborts
         install_redaction(application.state.security.secrets())
+        configure_audit_file(os.environ.get(ENV_AUDIT_LOG))
         if service is None:
             try:
                 settings = load_settings()
@@ -208,7 +211,7 @@ def create_app(service: InferenceService | None = None, security: SecuritySettin
         schema = base_openapi()
         schema.setdefault("components", {}).setdefault("securitySchemes", {})["basicAuth"] = {
             "type": "http", "scheme": "basic",
-            "description": "HTTP Basic. Two roles: supervisor (may upload) and read-only (may not). HTTPS is required beyond localhost.",
+            "description": "HTTP Basic with named users. Two roles: supervisor (may upload) and read-only (may not). HTTPS is required beyond localhost.",
         }
         schema["security"] = [{"basicAuth": []}]
         for operations in schema["paths"].values():
@@ -221,6 +224,11 @@ def create_app(service: InferenceService | None = None, security: SecuritySettin
                 }
                 operation["responses"]["403"] = {
                     "description": "Peer address not allow-listed, or the credential's role may not perform this operation.",
+                    "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}},
+                }
+                operation["responses"]["429"] = {
+                    "description": "Too many failed logins from this peer; retry after the Retry-After seconds.",
+                    "headers": {"Retry-After": {"schema": {"type": "integer"}}},
                     "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}},
                 }
                 operation["responses"].setdefault("503", {"description": "Security or model not ready."})
