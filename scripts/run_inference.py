@@ -43,9 +43,17 @@ def yolo_lines(records, class_index):
                    for r in records)
 
 
-def draw(image_bgr, records):
+STATE_COLORS = {"COMPLIANT": (60, 200, 60), "UNKNOWN": (160, 160, 160), "HELMET_MISSING": (255, 0, 0),
+                "VEST_MISSING": (255, 0, 0), "HELMET_AND_VEST_MISSING": (255, 0, 0)}
+
+
+def draw(image_bgr, records, people=None):
+    """Draw detections; `people` (list of {"box","state"}) adds a state tag under each worker's box."""
     import cv2
     img = image_bgr.copy()
+    for p in people or []:
+        x1, y1, x2, y2 = (int(v) for v in p["box"]); col = STATE_COLORS.get(p["state"], (255, 255, 255))[::-1]
+        cv2.putText(img, p["state"], (x1 + 3, min(img.shape[0] - 4, y2 - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, col, 2, cv2.LINE_AA)
     for r in records:
         x1, y1, x2, y2 = (int(v) for v in r["xyxy"]); col = COLORS.get(r["class"], (255, 255, 255))[::-1]
         cv2.rectangle(img, (x1, y1), (x2, y2), col, 2)
@@ -56,19 +64,7 @@ def draw(image_bgr, records):
     return img
 
 
-def load_model(checkpoint, config):
-    from ppe.class_map import load_class_map
-    import restricted_load as rl
-    cmap = load_class_map(config, checkpoint)               # raises unless the exact SHA-256 is registered
-    ck = rl.load_restricted(checkpoint)                      # static scan + allow-list, weights_only
-    src = rl.pick_model(ck)
-    names = dict(getattr(src, "names", {}))
-    if names and {int(k): v for k, v in names.items()} != dict(cmap.labels):
-        raise SystemExit(f"class names inside the checkpoint {names} do not match the registered map {dict(cmap.labels)}")
-    from ultralytics import YOLO
-    y = YOLO("yolov8n.yaml"); y.load(src)
-    y.model = src.float().eval(); y.model.names = dict(cmap.labels)
-    return y, cmap
+from ppe.yolo_detector import load_model  # noqa: E402,F401  (shared adapter; kept here under the same name)
 
 
 def frames_from_video(path, every_seconds):
@@ -98,7 +94,12 @@ def main(argv=None):
     for bad in ("models", "raw_css_dataset", "derived_ppe5", "weights"):
         if bad in out.parts:
             sys.exit(f"refusing to write inside a protected folder ({bad})")
-    model, cmap = load_model(a.checkpoint, a.config)
+    import yaml
+    from ppe.analysis import FrameAnalyzer, to_dict
+    from ppe.yolo_detector import load_yolo_detector
+    rules = yaml.safe_load((REPO / "config" / "rules.yaml").read_text())
+    detector, cmap = load_yolo_detector(a.checkpoint, a.config, a.device, a.imgsz, a.conf)
+    analyzer = FrameAnalyzer(detector, cmap, min_confidence=a.conf, min_negative_confidence=max(a.conf, rules["min_negative_confidence"]))
     index = {v: k for k, v in cmap.labels.items()}
     (out / "annotated").mkdir(parents=True, exist_ok=True); (out / "pred_txt").mkdir(exist_ok=True)
 
@@ -113,12 +114,13 @@ def main(argv=None):
         if img is None:
             continue
         h, w = img.shape[:2]
-        res = model.predict(img, conf=a.conf, imgsz=a.imgsz, device=a.device, verbose=False)[0]
-        b = res.boxes
-        recs = detections_to_records(b.xyxy.cpu().numpy().tolist(), b.conf.cpu().numpy().tolist(), b.cls.cpu().numpy().astype(int).tolist(), dict(cmap.labels), w, h)
-        cv2.imwrite(str(out / "annotated" / f"{name}.jpg"), draw(img, recs))
+        result = analyzer.analyze(name, img)
+        recs = detections_to_records([[d.box.x1, d.box.y1, d.box.x2, d.box.y2] for d in result.detections], [d.confidence for d in result.detections],
+                                     [index[d.label] for d in result.detections], dict(cmap.labels), w, h)
+        analysis = to_dict(result)
+        cv2.imwrite(str(out / "annotated" / f"{name}.jpg"), draw(img, recs, analysis["people"]))
         (out / "pred_txt" / f"{name}.txt").write_text(yolo_lines(recs, index))
-        summary.append({"image": name, "width": w, "height": h, "detections": recs}); n += 1
+        summary.append({"image": name, "width": w, "height": h, "detections": recs, "analysis": analysis}); n += 1
         if a.max_items and n >= a.max_items:
             break
     (out / "detections.json").write_text(json.dumps({"checkpoint_sha256": cmap.checkpoint_sha256, "conf": a.conf, "imgsz": a.imgsz, "items": summary}, indent=1))

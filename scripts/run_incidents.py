@@ -50,32 +50,31 @@ def main(argv=None):
     rules = load_rules(a.rules)
     import cv2
     import run_inference as ri
-    from ppe import compliance as comp
-    from ppe.detections import Box, Detection
     from ppe.smoothing import SustainedDetector
-    model, cmap = ri.load_model(a.checkpoint, a.config)
-    labels = dict(cmap.labels)
+    from ppe.analysis import FrameAnalyzer, to_dict
+    from ppe.yolo_detector import load_yolo_detector
+    detector, cmap = load_yolo_detector(a.checkpoint, a.config, a.device, 640, rules["min_positive_confidence"])
+    analyzer = FrameAnalyzer(detector, cmap, min_confidence=rules["min_positive_confidence"], min_negative_confidence=rules["min_negative_confidence"])
+    index = {v: k for k, v in cmap.labels.items()}
     det = SustainedDetector(rules["hold_seconds"], rules["max_gap_seconds"])
     out = a.out.resolve(); (out / "annotated").mkdir(parents=True, exist_ok=True)
     rows, incidents, naive_frames, pipe_frames = [], [], 0, 0
     states = collections.Counter()
     for t, frame in timed_frames(a.video, rules["sample_fps"]):
         h, w = frame.shape[:2]
-        res = model.predict(frame, conf=rules["min_positive_confidence"], imgsz=640, device=a.device, verbose=False)[0]
-        b = res.boxes
-        recs = ri.detections_to_records(b.xyxy.cpu().numpy().tolist(), b.conf.cpu().numpy().tolist(), b.cls.cpu().numpy().astype(int).tolist(), labels, w, h)
-        dets = [Detection(r["class"], r["confidence"], Box(*r["xyxy"])) for r in recs]
-        people, unassigned = comp.evaluate(dets, rules["min_negative_confidence"])
-        active = comp.active_rules(people)
-        naive = any(d.label in ("no_helmet", "no_safety_vest") for d in dets)
-        naive_frames += naive; pipe_frames += bool(active)
-        for p in people:
-            states[p.state] += 1
         fid = f"t{t:06.2f}s"
+        result = analyzer.analyze(fid, frame, t)
+        naive = any(d.label in ("no_helmet", "no_safety_vest") for d in result.detections)
+        active = set(result.rules)
+        naive_frames += naive; pipe_frames += bool(active)
+        for p in result.people:
+            states[p.state] += 1
         new = det.update(t, active, fid); incidents += new
-        rows.append({"t": round(t, 2), "people": len(people), "states": [p.state for p in people], "naive_violation": naive, "active_rules": sorted(active), "incidents_raised": [i.rule for i in new]})
+        rows.append({"t": round(t, 2), "people": len(result.people), "states": [p.state for p in result.people], "naive_violation": naive, "active_rules": sorted(active), "incidents_raised": [i.rule for i in new]})
         if naive or active or new:
-            cv2.imwrite(str(out / "annotated" / f"{fid}.jpg"), ri.draw(frame, recs))
+            recs = ri.detections_to_records([[d.box.x1, d.box.y1, d.box.x2, d.box.y2] for d in result.detections], [d.confidence for d in result.detections],
+                                            [index[d.label] for d in result.detections], dict(cmap.labels), w, h)
+            cv2.imwrite(str(out / "annotated" / f"{fid}.jpg"), ri.draw(frame, recs, to_dict(result)["people"]))
     n = len(rows)
     summary = {"video": a.video.name, "checkpoint_sha256": cmap.checkpoint_sha256, "rules": rules, "frames_sampled": n,
                "frames_flagged_naive": naive_frames, "frames_flagged_by_pipeline": pipe_frames,

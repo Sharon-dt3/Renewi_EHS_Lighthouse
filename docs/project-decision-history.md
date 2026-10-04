@@ -63,3 +63,9 @@ Recorded risk acceptance, so it is not forgotten:
 - **Not measured:** recall for real missing-PPE cases (the clip had no violators), behaviour on CCTV-quality footage, and any figure from an independent evaluation set (OPEN-02 still open).
 - **Mitigations planned in the pipeline:** a higher confidence floor for negative classes, an UNKNOWN verdict whenever evidence conflicts, and 1.5-second sustained-detection smoothing (S15).
 - Accuracy claims remain forbidden until the independent set exists (`docs/acceptance-thresholds.md`).
+
+## 11. S11 closed (2026-10-04)
+- One shared pipeline: `ppe/yolo_detector.py` (the only Ultralytics-aware code) -> `ppe/analysis.py` `FrameAnalyzer` -> `ppe/compliance.py` -> JSON schema 1.1. The CLIs (`scripts/run_inference.py`, `scripts/run_incidents.py`) and the future API use it.
+- `restricted_load` moved to `ppe/restricted_load.py`; `scripts/restricted_load.py` is a compatibility shim.
+- Behaviour unchanged by the refactor: the Pexels clip (63 frames at 4 fps) still gives 17 naive flags, 4 pipeline flags, 0 incidents; the 26 test photos give the same detection counts.
+- **Open design question found while closing S11:** rule flags are derived from the combined five-state verdict, so a worker with an explicit strong `no_safety_vest` but no helmet detection is `UNKNOWN` and raises no rule. That follows the plan's text (incomplete combinations are UNKNOWN) but under-reports. Option: derive rule flags from per-item verdicts (a vest violation is flagged whenever the vest evidence is explicitly negative, whatever the helmet status) while keeping the five-state label for display. Awaiting the owner's decision.
