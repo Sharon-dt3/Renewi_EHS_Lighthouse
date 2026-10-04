@@ -8,3 +8,13 @@ checkpoints:
       12: helmet
       13: no_helmet
       16: safety_vest
+  # colab-full-1 (2026-10-04): COCO-pretrained YOLOv8n fine-tuned on derived_ppe5; stage2/weights/last.pt.
+  # Own class map: ids 0-4. Never reuse the Hafizqaim ids above. Trained, NOT independently evaluated (see docs/training-runs.md).
+  899d48d685404a2aba794233da8990ac8478e841d5e5713557dc2d99ca8d6463:
+    source: colab-full-1
+    classes:
+      0: person
+      1: helmet
+      2: no_helmet
+      3: safety_vest
+      4: no_safety_vest

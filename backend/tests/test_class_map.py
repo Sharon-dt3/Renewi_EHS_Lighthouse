@@ -53,3 +53,13 @@ class LoadClassMapTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_colab_full_1_checkpoint_has_its_own_five_class_map():
+    import yaml
+    from pathlib import Path
+    cfg = yaml.safe_load((Path(__file__).resolve().parents[2] / "config" / "classes.yaml").read_text())
+    new = cfg["checkpoints"]["899d48d685404a2aba794233da8990ac8478e841d5e5713557dc2d99ca8d6463"]
+    assert new["classes"] == {0: "person", 1: "helmet", 2: "no_helmet", 3: "safety_vest", 4: "no_safety_vest"}
+    old = cfg["checkpoints"]["5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836"]
+    assert 4 not in old["classes"] and "no_safety_vest" not in old["classes"].values()   # the old map is untouched and has no negative vest
