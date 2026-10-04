@@ -89,7 +89,7 @@ C-01 zero Renewi footage; C-02 single builder, five-day budget (see risk R-07); 
 | --- | --- | --- |
 | ADR-001 | Canonical five-class taxonomy and naming (above) | Proposed |
 | ADR-002 | **Fine-tune Hafizqaim for five classes** rather than infer NO-Safety Vest from absence or substitute another model. A missing vest detection is never negative evidence; conflicts or insufficient evidence give `UNKNOWN` | Proposed. Needs approval | **Update 2026-10-04:** the main path is a COCO-pretrained start because the Hafizqaim weights are unlicensed; Hafizqaim stays a comparison run if licensed.
-| ADR-003 | `/infer` contract: image upload (multipart) for the PoC, plus a server-side `clip_id` pointer for demo clips. No client-supplied file paths or URLs | Proposed. Architecture lists this as undecided |
+| ADR-003 | `/infer` contract: image upload (multipart) for the PoC, plus a server-side `clip_id` pointer for demo clips. No client-supplied file paths or URLs | Proposed. Architecture lists this as undecided **Update 2026-10-04:** the operator/supervisor is the persona that uploads feeds once the system is built (owner statement); the upload rules and the C-01 question are in `docs/access-control.md`. |
 | ADR-004 | Event transport to UI: **SSE** (one-directional, simple, no extra dependency) with polling fallback. Alternatives: WebSocket, polling | Proposed. Architecture ADR-001 is undecided |
 | ADR-005 | Security: app-level Basic auth and socket-peer IP allow-list on the backend; HTTPS and a reverse proxy covering the frontend at the deployment boundary; forwarding headers ignored unless a trusted-proxy policy is added | Proposed |
 | ADR-006 | Metrics: store as static JSON (`data/metrics/latest.json`) with provenance, served to the UI | Proposed. Architecture lists as pending |
@@ -144,7 +144,7 @@ Statuses: `done`, `partial`, `to_do`, `blocked`. Each step lists the validation 
 | S11 | FR-1 inference and compliance on the real model: association (PPE centre to smallest containing person box, stable ties), five states (`COMPLIANT`, `HELMET_MISSING`, `VEST_MISSING`, `HELMET_AND_VEST_MISSING`, `UNKNOWN`), original-frame coordinates, JSON and annotated output, CLI. Scaffolding exists; complete and test on real detections | Code | blocked | S10 | VAL-02 tests plus real CLI runs |
 | S12 | FR-2 zones: per-clip polygons in source-frame pixels, validated, bottom-centre, boundary-inclusive ray casting, `ZONE_INCURSION` and combined events. **Optional, drop first** | Code and Test | blocked | S10, OPEN-03 | VAL-04 on real zone fixtures. Logic already synthetic-tested |
 | S13 | `/infer` endpoint and health check per ADR-003 (multipart image, server-side `clip_id` for demo clips), bounded input, shared pipeline with the CLI | Code | blocked | S11 | OpenAPI contract published (architecture gate G1) |
-| S14 | Security per ADR-005: environment-backed Basic auth, application-level IP/CIDR allow-list on the socket peer, constant-time comparison, 401 with challenge, 403 for disallowed peers, fail closed on missing config, log redaction | Code | blocked | S13 | VAL-06; architecture gate G3 |
+| S14 | Security per ADR-005: environment-backed Basic auth, application-level IP/CIDR allow-list on the socket peer, constant-time comparison, 401 with challenge, 403 for disallowed peers, fail closed on missing config, log redaction | Code | blocked | S13 | VAL-06; architecture gate G3 **Roles (proposed):** supervisor credential may upload and acknowledge; read-only credential may not (`docs/access-control.md`). |
 | S15 | **Temporal smoothing** per ADR-007: timestamp-based, incident only after 1.5 s sustained, per-rule state, one incident per sustained episode, tolerance for frame-rate variability | Code | blocked | S11 | Synthetic intermittent-detection tests (NFR-04) |
 
 ### Phase C: persistence and UI
@@ -195,6 +195,7 @@ Acceptance criteria AC-01 to AC-07 from revision 1 are unchanged. New: **AC-08**
 | OPEN-08 | **Approved 2026-10-04** by the project owner for isolated training (`config/training_authorization.yaml`). The harness is `scripts/train_ppe5.py`, built to `docs/weight-transfer-plan.md` section 4 | Security owner | S8 (approved) |
 | OPEN-09 | Whether the five-day single-builder budget (C-02) still applies given Phase A | Sponsor | Planning |
 | OPEN-10 | Approve ADR-001 to ADR-008, including the architecture ADRs left undecided (transport, `/infer` contract, metrics storage) | Architect | S13, S17, S18 |
+| OPEN-11 | C-01 (zero Renewi footage) versus operators uploading their own feeds: choose approved-public-only for the PoC, or relax C-01 in writing with privacy sign-off. Assume approved-public-only until decided. Also decide the role mechanism (shared credential, two credentials, or SSO) | Sponsor / compliance | S13, S14 |
 
 ## 9. Risks
 
