@@ -185,14 +185,14 @@ Acceptance criteria AC-01 to AC-07 from revision 1 are unchanged. New: **AC-08**
 
 | ID | Item | Owner | Required before |
 | --- | --- | --- | --- |
-| OPEN-01 | **Route decided 2026-10-04** (`docs/weights-licence-decision.md`): request a licence from the Hafizqaim maintainer (draft in `docs/rights-request-hafizqaim.md`, not sent) and train from COCO-pretrained YOLOv8n meanwhile. **Gate still open** until the rights reviewer approves the weights actually used (Ultralytics AGPL-3.0/enterprise and COCO-weights terms) | PoC/model owner and rights reviewer | S8 |
+| OPEN-01 | **Approved for this PoC 2026-10-04** by the project owner (`config/training_authorization.yaml`, scope: this PoC only). Route: train from COCO-pretrained YOLOv8n (`docs/weights-licence-decision.md`); Hafizqaim stays unlicensed and unused (rights request draft not sent). Not recorded: approver name, AGPL-3.0 vs enterprise route, a separate rights-reviewer document | PoC/model owner and rights reviewer | S8 (approved; record gaps remain) |
 | OPEN-02 | Source, license and annotate an independent evaluation set (at least 100 images from at least 20 clips or sites, at least 50 instances per target class); CSS v27's 61 clean held-out photos are not enough. See `docs/evaluation-set-guidelines.md` | Dataset owner | S9 and any "100-clip" claim |
 | OPEN-03 | Licensed demo clips and per-clip zone polygons | PoC owner | S10 fixtures, S12, S21 |
 | OPEN-04 | Plans-location resolver | Documentation platform owner | Canonical publication |
 | OPEN-05 | Rights to every CSS v27 image (uploader rights not established); suitability for Renewi sites | Dataset owner | S6 |
 | OPEN-06 | Canonical code tree and layout; Git scope | Engineering | S3 |
 | OPEN-07 | **Resolved 2026-10-04:** thresholds set by the owner (Balanced profile plus recall floor) and locked before any results; see `docs/acceptance-thresholds.md` and `config/acceptance_thresholds.yaml` | Model owner | done |
-| OPEN-08 | Security/runtime owner authorization of a digest-bound loading and training harness | Security owner | S8 |
+| OPEN-08 | **Approved 2026-10-04** by the project owner for isolated training (`config/training_authorization.yaml`). The harness is `scripts/train_ppe5.py`, built to `docs/weight-transfer-plan.md` section 4 | Security owner | S8 (approved) |
 | OPEN-09 | Whether the five-day single-builder budget (C-02) still applies given Phase A | Sponsor | Planning |
 | OPEN-10 | Approve ADR-001 to ADR-008, including the architecture ADRs left undecided (transport, `/infer` contract, metrics storage) | Architect | S13, S17, S18 |
 

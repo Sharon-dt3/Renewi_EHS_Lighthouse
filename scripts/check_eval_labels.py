@@ -20,11 +20,11 @@ MIN_SIDE = {"person": 12, "helmet": 8, "no_helmet": 12, "safety_vest": 12, "no_s
 TARGET = {"person": 150, "helmet": 50, "no_helmet": 50, "safety_vest": 50, "no_safety_vest": 50}
 PROV_COLS = ["source_id", "source_url", "licence", "licence_url", "author", "retrieved_date", "media_type", "split_group", "notes"]
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("eval_dir", type=Path)
     ap.add_argument("--min-images", type=int, default=100)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     d = a.eval_dir
     errors, warns = [], []
     imgs = {p.stem: p for p in sorted((d / "images").glob("*")) if p.suffix.lower() in {".jpg", ".jpeg", ".png"} and not p.name.startswith("._")}

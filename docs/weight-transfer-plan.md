@@ -126,6 +126,8 @@ Smoke test before any real run (after authorization): 1 epoch on a tiny subset, 
 the transfer check passes and the checkpoint hash is unchanged.
 
 ## 9. Gates (all required before S8)
+
+**Status 2026-10-04:** the owner approved gates 2, 3 and 5 for this PoC (`config/training_authorization.yaml`). Remaining before a real run: permission to download the COCO weights, a pinned weights hash, and a passing smoke test.
 1. Owner approval of this document.
 2. Weights rights resolved for the weights that will actually be used (OPEN-01): decision made 2026-10-04 (COCO main path, Hafizqaim only if licensed); **still open until the rights reviewer approves the Ultralytics and COCO-weights terms**.
 3. Security authorization of the loading and training harness (OPEN-08).

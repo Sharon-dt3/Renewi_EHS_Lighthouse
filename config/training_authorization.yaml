@@ -1,0 +1,19 @@
+# Gate record for training (S8). Read by scripts/train_ppe5.py, which refuses a real run unless all three are true.
+# Recorded 2026-10-04 from the project owner's reply in chat ("yes its approved for this poc") to the three gates:
+#   1. rights sign-off for using Ultralytics YOLOv8 and COCO-pretrained weights,
+#   2. security authorization to load and train in an isolated environment,
+#   3. the owner's go-ahead.
+# Scope: THIS PoC ONLY. Not approval for deployment, redistribution or any other project.
+# Not recorded: the approver's name, the licence route (AGPL-3.0 vs enterprise) or any written rights-reviewer document.
+rights_approved_for_poc: true
+security_isolation_approved: true
+training_go_ahead: true
+approved_by: "Project owner (name not recorded)"
+approved_on: "2026-10-04"
+scope: "this PoC only"
+conditions:
+  - "Initial weights must be a local file whose SHA-256 is pinned in config/train_ppe5.yaml; the harness never auto-downloads."
+  - "Downloading the COCO-pretrained weights needs its own explicit permission (filename, source, size)."
+  - "models/best.pt is never loaded or modified; its SHA-256 is checked before and after."
+  - "Run only in the isolated environment described in docs/weight-transfer-plan.md section 4."
+  - "A smoke test must pass before any full run."

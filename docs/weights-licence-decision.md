@@ -38,3 +38,13 @@ This does not make the licence question disappear. It moves it:
 ## Gate wording for S8
 Gate 2 (weights rights) is satisfied only when the rights reviewer records written approval of the weights that will actually be
 used for training. Until then S8 stays blocked.
+
+## Approval record (2026-10-04)
+The project owner replied "yes its approved for this poc" to the three training gates (rights sign-off for Ultralytics YOLOv8 and
+COCO-pretrained weights, security authorization for isolated loading and training, and the go-ahead). Recorded in
+`config/training_authorization.yaml`.
+- **Scope: this PoC only.** Not approval for deployment, redistribution or other projects.
+- **Not recorded:** the approver's name; which licence route applies (AGPL-3.0 or an enterprise licence); any written rights-reviewer document.
+  If a rights reviewer separate from the owner exists, their written record should be added here.
+- Hafizqaim stays unlicensed. Option A/B (seeding from `best.pt`) remain blocked until a licence is recorded.
+- Downloading the COCO weights is **not** covered by this approval and needs its own explicit permission.
