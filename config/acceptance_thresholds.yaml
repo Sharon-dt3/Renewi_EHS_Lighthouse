@@ -1,0 +1,20 @@
+# Acceptance thresholds for the fine-tuned five-class model (OPEN-07).
+# Set by the project owner on 2026-10-04 BEFORE any trained model or evaluation result exists.
+# Do not change after results are seen. A change needs a new dated entry in
+# docs/acceptance-thresholds.md and a new file hash.
+profile: balanced
+metric: AP50            # per-class average precision at IoU 0.5
+evaluation_set: independent   # docs/evaluation-set-guidelines.md (ADR-009); CSS v27 held-out is sanity-check only
+per_class_ap50_min:
+  person: 0.80
+  helmet: 0.80
+  safety_vest: 0.75
+  no_helmet: 0.60
+  no_safety_vest: 0.60
+overall_map50_min: 0.70
+recall_floor:                  # negative classes only: a missed violation is the costly error
+  classes: [no_helmet, no_safety_vest]
+  min_recall: 0.60
+  at_confidence: 0.25
+  iou: 0.5
+# All of these must hold. Missing the independent evaluation set means "not evaluated", never "passed".

@@ -1,7 +1,9 @@
-# S7: Architecture and weight-transfer plan (DRAFT, not approved)
+# S7: Architecture and weight-transfer plan (APPROVED as a document, 2026-10-04)
 
-Status: draft for owner review, written 2026-10-04. **Nothing here authorizes loading the checkpoint or training.**
-Training (S8) needs separate, explicit user authorization after the gates in section 9.
+Status: **approved by the project owner on 2026-10-04** as the plan of record for S7. The approval covers this document
+only. **It does not authorize loading the checkpoint or training.** Open decisions D1-D6 (section 8) keep the
+recommendations written there until the owner changes them; D4 (thresholds) is now decided (`docs/acceptance-thresholds.md`); D5 (selfie policy) is still undecided.
+Training (S8) still needs separate, explicit user authorization after the gates in section 9 (gates 2, 3 and 5 are not yet met; gate 4 is met).
 Related: `docs/implementation-plan.md` (S7, S8, S9, ADR-002, ADR-009), `docs/model-selection.md`,
 `docs/evaluation-set-guidelines.md`, `derived_ppe5/` (the derived dataset, outside Git).
 
@@ -97,9 +99,8 @@ terms (AGPL-3.0 or enterprise); a rights review is required before any deploymen
   Git commit and UTC date. No placeholder numbers.
 - CSS valid and test (35 and 26 images) are **sanity checks only**: a SIFT check found 357 held-out/train pairs
   with 30 or more matching points, so they are not independent of training.
-- Acceptance thresholds are **OPEN-07 and are not decided**. Proposed starting points for discussion only
-  (not agreed): person and helmet AP50 at least 0.80; safety_vest at least 0.75; no_helmet and no_safety_vest at least 0.60.
-  The owner sets the real values before S9 runs, because they must not be tuned after seeing results.
+- Acceptance thresholds: **set by the owner on 2026-10-04 and locked** (Balanced profile plus a recall floor of 0.60 for
+  no_helmet and no_safety_vest); see `docs/acceptance-thresholds.md` and `config/acceptance_thresholds.yaml`. They must not be changed after results are seen.
 - Failure-case review: inspect false positives and misses, especially NO-Safety Vest versus safety_vest confusions,
   occlusion, distance and night views. Absence of a vest detection must remain `UNKNOWN` downstream.
 
@@ -114,7 +115,7 @@ and the new class map entry. Record the original checkpoint hash before and afte
 | D1 | Option A (seeded) as the main path, Option B and C as controls | Yes | Model owner |
 | D2 | Compute: AWS GPU (g5/g6) versus the Mac | GPU for the real runs. The Mac (CPU or MPS) only for smoke tests | Infrastructure |
 | D3 | Image size 640 versus 960 | Start at 640, test 960 as an ablation | Model owner |
-| D4 | Acceptance thresholds (OPEN-07) | Owner to set before S9 | Model owner |
+| D4 | Acceptance thresholds (OPEN-07) | **Decided 2026-10-04**: Balanced profile plus recall floor | Model owner |
 | D5 | Selfie and off-domain images in training | Decide, then re-run the derived-dataset builder | Dataset owner |
 | D6 | Apply the AI first-pass audit decisions | Only after human confirmation | Reviewer |
 
@@ -125,7 +126,7 @@ the transfer check passes and the checkpoint hash is unchanged.
 1. Owner approval of this document.
 2. Weights licence resolved for fine-tuning and intended use (OPEN-01).
 3. Security authorization of the loading and training harness (OPEN-08).
-4. Acceptance thresholds agreed (OPEN-07).
+4. Acceptance thresholds agreed (OPEN-07): **met 2026-10-04**.
 5. Explicit user authorization to start training (S8).
 
 ## 10. Not covered here
