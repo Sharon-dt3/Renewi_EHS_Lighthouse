@@ -95,6 +95,7 @@ C-01 zero Renewi footage; C-02 single builder, five-day budget (see risk R-07); 
 | ADR-006 | Metrics: store as static JSON (`data/metrics/latest.json`) with provenance, served to the UI | Proposed. Architecture lists as pending |
 | ADR-007 | Temporal smoothing: time-based (1.5 s on frame timestamps), not frame-count based, to tolerate frame-rate variability (A-03) | Proposed |
 | ADR-008 | Person bounding box source: the fine-tuned five-class model's Person class | Proposed |
+| ADR-009 | **Independent evaluation set.** CSS v27 can yield only about 61 cleanly held-out photos (35 valid, 26 test; about 20 NO-Safety Vest boxes per split), because 209 of 270 candidate photos also appear inside other images (mosaics). Final evaluation therefore uses a fresh, licensed, clip-split set (guidelines: `docs/evaluation-set-guidelines.md`). CSS held-out numbers are secondary | Proposed. Needs an owner to source and annotate |
 
 ## 5. Current state (verified 2026-10-04)
 
@@ -131,9 +132,9 @@ Statuses: `done`, `partial`, `to_do`, `blocked`. Each step lists the validation 
 | S4 | **Original-resolution annotation audit** with a decision log; train/val/test source-family overlap check; resolve 2,799 vs 2,801 | Reviewer and Code | blocked | S3 | Signed decision log in `reports/` |
 | S5 | **Dataset readiness decision** (use as is, clean, or reject) | Dataset owner | blocked | S4 | Written decision |
 | S6 | **Derived five-class dataset**: Person, Hardhat, NO-Hardhat, Safety Vest, NO-Safety Vest; drop Mask, NO-Mask, Safety Cone, machinery, vehicle; raw data untouched; CC BY 4.0 attribution and change notice; re-split by source family if the audit finds leakage | Code | blocked | S5 | New dataset directory with manifest, hashes and class counts |
-| S7 | **Architecture and weight-transfer plan**: 17-class head to 5-class head, layers transferred or frozen, seed, hyperparameters, per-class acceptance thresholds (OPEN-07), restricted-loading harness (read-only source mount, no unsafe globals, digest verified before and after, output-only write boundary) | Model and security owners | blocked | S6 | Written plan approved by the user |
+| S7 | **Architecture and weight-transfer plan**: 17-class head to 5-class head, layers transferred or frozen, seed, hyperparameters, per-class acceptance thresholds (OPEN-07), restricted-loading harness (read-only source mount, no unsafe globals, digest verified before and after, output-only write boundary) | Model and security owners | **draft written** (`docs/weight-transfer-plan.md`, awaiting approval) | S6 | Written plan approved by the user |
 | S8 | **Fine-tuning** | Training | blocked | S7, OPEN-01, OPEN-08 | Needs **separate explicit user authorization**. New versioned checkpoint with its own hash. Original `best.pt` unchanged |
-| S9 | **Evaluation**: overall mAP50 and per-class AP50, precision, recall on the held-out test split; provenance (dataset version and hash, checkpoint hash and revision, thresholds, UTC date, Git commit); failure-case review; no placeholder values | Test | blocked | S8 | Evaluation JSON in `reports/` and `data/metrics/latest.json`, one reproducible command |
+| S9 | **Evaluation**: overall mAP50 and per-class AP50, precision, recall on the independent evaluation set (ADR-009), with CSS v27 held-out results as secondary; provenance (dataset version and hash, checkpoint hash and revision, thresholds, UTC date, Git commit); failure-case review; no placeholder values | Test | blocked | S8, OPEN-02 | Evaluation JSON in `reports/` and `data/metrics/latest.json`, one reproducible command |
 | S10 | Register the new checkpoint's class map under its own hash; **FR-1 real-model gate** on reviewed fixtures (Person and positive and negative PPE across the fixture set, image and video) | Code and Test | blocked | S9, OPEN-03 | `docs/fr1-verification.md` with explicit pass or fail. FR-2 and the API stay blocked on failure |
 
 ### Phase B: rules and backend
@@ -185,7 +186,7 @@ Acceptance criteria AC-01 to AC-07 from revision 1 are unchanged. New: **AC-08**
 | ID | Item | Owner | Required before |
 | --- | --- | --- | --- |
 | OPEN-01 | Exact-weights licence for Hafizqaim covering fine-tuning and intended use | PoC/model owner and rights reviewer | S8 |
-| OPEN-02 | Authoritative 100-clip evaluation dataset. CSS v27's 82-image test split is not it | Dataset owner | Any "100-clip" claim |
+| OPEN-02 | Source, license and annotate an independent evaluation set (at least 100 images from at least 20 clips or sites, at least 50 instances per target class); CSS v27's 61 clean held-out photos are not enough. See `docs/evaluation-set-guidelines.md` | Dataset owner | S9 and any "100-clip" claim |
 | OPEN-03 | Licensed demo clips and per-clip zone polygons | PoC owner | S10 fixtures, S12, S21 |
 | OPEN-04 | Plans-location resolver | Documentation platform owner | Canonical publication |
 | OPEN-05 | Rights to every CSS v27 image (uploader rights not established); suitability for Renewi sites | Dataset owner | S6 |

@@ -87,7 +87,10 @@ def main() -> int:
     images, fam_splits = [], collections.defaultdict(set)
     fam_count = collections.Counter()
     for split in SPLITS:
-        img_dir = ds / split / "images"
+        # two layouts: <split>/images (Roboflow) or images/<split> (derived dataset)
+        flat = (ds / "images" / split).is_dir()
+        img_dir = ds / "images" / split if flat else ds / split / "images"
+        lab_dir = ds / "labels" / split if flat else ds / split / "labels"
         if not img_dir.is_dir():
             continue
         for p in sorted(img_dir.iterdir()):
@@ -95,7 +98,7 @@ def main() -> int:
                 continue
             with Image.open(p) as im:
                 w, h = im.size
-            boxes, problems = read_labels(ds / split / "labels" / (p.stem + ".txt"), len(names), w, h)
+            boxes, problems = read_labels(lab_dir / (p.stem + ".txt"), len(names), w, h)
             fam = family_of(p.stem)
             fam_splits[fam].add(split)
             fam_count[fam] += 1
