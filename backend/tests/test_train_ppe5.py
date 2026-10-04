@@ -117,3 +117,47 @@ def test_init_weights_with_unsafe_pickle_are_refused_at_preflight(world):
     with zipfile.ZipFile(p, "w") as z: z.writestr("m/data.pkl", pickle.dumps({"x": _Evil()}, protocol=2))
     cfg["init"]["weights_sha256"] = sha(p.read_bytes())            # hash matches, so only the scan can stop it
     with pytest.raises(tr.Refusal, match="static pickle scan"): tr.preflight(cfg, root, auth, "smoke", "r1")
+
+def test_protected_checkpoint_can_be_absent_only_when_config_says_so(world):
+    root, cfg, auth = world
+    (root / "models" / "best.pt").unlink()
+    with pytest.raises(tr.Refusal): tr.check_protected(cfg, root)
+    cfg["protected_checkpoint"]["required_on_host"] = False
+    assert tr.check_protected(cfg, root).startswith("absent-on-this-host")
+
+def test_present_protected_checkpoint_is_still_hash_checked_when_optional(world):
+    root, cfg, auth = world
+    cfg["protected_checkpoint"]["required_on_host"] = False
+    (root / "models" / "best.pt").write_bytes(b"tampered")
+    with pytest.raises(tr.Refusal): tr.check_protected(cfg, root)
+
+def test_network_isolation_rules():
+    assert tr.check_network_isolation({}, reachable=lambda: False).startswith("isolated")
+    with pytest.raises(tr.Refusal): tr.check_network_isolation({}, reachable=lambda: True)
+    with pytest.raises(tr.Refusal): tr.check_network_isolation({"network_isolation_waived": False}, reachable=lambda: True)
+    with pytest.raises(tr.Refusal): tr.check_network_isolation({"network_isolation_waived": "yes"}, reachable=lambda: True)  # must be literal true
+    out = tr.check_network_isolation({"network_isolation_waived": True, "network_isolation_waived_by": "A", "network_isolation_waived_on": "d"}, reachable=lambda: True)
+    assert out.startswith("NOT isolated; waived by A")
+
+def test_real_authorization_file_does_not_waive_isolation():
+    import yaml as _y
+    a = _y.safe_load((tr.REPO / "config" / "training_authorization.yaml").read_text())
+    assert a["network_isolation_waived"] is False
+
+def test_real_runs_use_an_absolute_path_data_yaml_and_leave_the_dataset_alone(world):
+    root, cfg, auth = world
+    src = root / "derived" / "data.yaml"
+    src.write_text(yaml.safe_dump({"path": ".", "train": "images/train", "val": "images/valid", "test": "images/test", "nc": 5, "names": FINAL}))
+    before = src.read_bytes(); out = root / "runs" / "r"; out.mkdir(parents=True)
+    dst = tr.write_abs_data_yaml(cfg, root, out)
+    y = yaml.safe_load(dst.read_text())
+    assert Path(y["path"]).is_absolute() and Path(y["path"]) == (root / "derived").resolve()
+    assert (Path(y["path"]) / y["train"]).is_dir() and y["nc"] == 5 and y["names"] == FINAL
+    assert src.read_bytes() == before and dst.parent == out            # dataset file untouched, copy lives in the run folder
+
+def test_abs_yaml_refuses_missing_split_directory(world):
+    root, cfg, auth = world
+    src = root / "derived" / "data.yaml"
+    src.write_text(yaml.safe_dump({"path": ".", "train": "images/nope", "val": "images/valid", "nc": 5, "names": FINAL}))
+    out = root / "runs" / "r"; out.mkdir(parents=True)
+    with pytest.raises(tr.Refusal): tr.write_abs_data_yaml(cfg, root, out)

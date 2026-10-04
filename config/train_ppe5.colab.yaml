@@ -1,0 +1,29 @@
+# Colab variant of config/train_ppe5.yaml. Differences: GPU device, larger batch and workers, best.pt not required on the host.
+# Training configuration for the five-class PoC model (S8). Read by scripts/train_ppe5.py.
+# Paths are relative to the workspace root (the folder containing raw_css_dataset/).
+seed: 0
+data: derived_ppe5/data.yaml
+out_root: runs                     # one new folder per run; never under models/ or raw_css_dataset/
+init:
+  kind: coco_yolov8n               # only this kind is supported; Hafizqaim seeding needs a licence record and a separate reviewed script
+  weights_path: weights/yolov8n.pt # LOCAL file only. The harness never downloads. Obtaining it needs explicit permission.
+  weights_sha256: f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36   # recorded on first download 2026-10-04 (6,549,796 bytes, ultralytics/assets release v8.3.0). GitHub publishes no checksum, so this is trust-on-first-use
+protected_checkpoint:
+  path: models/best.pt
+  sha256: 5464f555f1b9831e6f1f9adcab11063f9a081d62e6650c2f2154bd4c01720836
+  required_on_host: false          # best.pt is not copied to Colab (unlicensed, not used on the main path)
+train:
+  imgsz: 640
+  batch: 32
+  device: 0                        # Colab GPU
+  workers: 4
+  stage1: {epochs: 10, freeze: 10, lr0: 0.01}    # backbone frozen so the new class layer settles
+  stage2: {epochs: 90, lr0: 0.001}               # everything unfrozen at a lower learning rate
+  mosaic: 0.5                      # reduced: the data already contains mosaics
+  patience: 0                      # no early stopping; keep final-epoch weights (35 validation images are too few to pick a best epoch)
+  deterministic: true
+  amp: false                       # avoids Ultralytics' AMP check that downloads a model
+  plots: false                     # avoids font downloads
+smoke:
+  fraction: 0.02                   # share of training images for the smoke test
+  epochs: 1

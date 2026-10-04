@@ -40,7 +40,9 @@ def check_authorization(path):
 
 def check_protected(cfg, root):
     pc = cfg["protected_checkpoint"]; p = root / pc["path"]
-    if not p.exists(): raise Refusal(f"protected checkpoint {p} not found")
+    if not p.exists():
+        if pc.get("required_on_host", True) is False: return "absent-on-this-host (not required; main path never loads it)"
+        raise Refusal(f"protected checkpoint {p} not found")
     got = sha256(p)
     if got != pc["sha256"]: raise Refusal(f"{pc['path']} SHA-256 changed: {got}")
     return got
@@ -75,6 +77,23 @@ def check_dataset(cfg, root):
     if counts["train"] == 0: raise Refusal("no training images")
     m = base / "manifest.json"
     return counts, (sha256(m) if m.exists() else None)
+
+def network_reachable(timeout=3.0):
+    """True if an outbound connection succeeds (so the process is NOT network-isolated)."""
+    import socket
+    for host, port in (("1.1.1.1", 53), ("8.8.8.8", 53)):
+        try:
+            socket.create_connection((host, port), timeout=timeout).close(); return True
+        except OSError: continue
+    return False
+
+def check_network_isolation(auth, reachable=network_reachable):
+    """Approval condition: train only without network access. A host that cannot isolate needs an explicit waiver."""
+    if not reachable(): return "isolated (no outbound connection)"
+    if auth.get("network_isolation_waived") is True:
+        return f"NOT isolated; waived by {auth.get('network_isolation_waived_by', 'owner')} on {auth.get('network_isolation_waived_on', '?')}"
+    raise Refusal("network is reachable and network_isolation_waived is not true in the authorization file; "
+                  "run inside scripts/run_isolated.sh or an equivalent, or have the owner record a waiver")
 
 def check_thresholds():
     t = REPO / "config" / "acceptance_thresholds.yaml"; doc = (REPO / "docs" / "acceptance-thresholds.md").read_text()
@@ -129,6 +148,16 @@ def smoke_subset(cfg, root, out, fraction, seed):
     (d / "data.yaml").write_text(f"path: {d}\ntrain: images/train\nval: images/valid\nnc: 5\nnames: {FINAL}\n")
     return d / "data.yaml"
 
+def write_abs_data_yaml(cfg, root, out):
+    """Real runs use a copy of data.yaml with an ABSOLUTE `path` inside the run folder.
+    Ultralytics resolves a relative `path` (such as '.') against its own datasets directory, not the yaml's folder,
+    which made the first Colab full run fail with 'images not found'. The dataset itself is never modified."""
+    src = (root / cfg["data"]).resolve(); y = yaml.safe_load(src.read_text())
+    y["path"] = str(src.parent)
+    for k in ("train", "val", "test"):
+        if k in y and not (src.parent / y[k]).is_dir(): raise Refusal(f"data.yaml {k} directory {src.parent / y[k]} not found")
+    dst = out / "data_abs.yaml"; dst.write_text(yaml.safe_dump(y, sort_keys=False)); return dst
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     g = ap.add_mutually_exclusive_group()
@@ -145,9 +174,15 @@ def main(argv=None):
         print(f"REFUSED: {e}"); return 2
     print(json.dumps({k: v for k, v in ev.items() if k != "authorization"}, indent=2, default=str))
     if mode == "dry-run":
+        try: print("network:", check_network_isolation(ev["authorization"] or {}))
+        except Refusal as e: print("network: would REFUSE a real run:", e)
         print("DRY RUN: nothing loaded or written." + (f" A real run is blocked by {len(ev['blockers'])} item(s)." if ev["blockers"] else " Pre-flight would pass."))
         return 0 if not ev["blockers"] else 3
 
+    try: ev["network"] = check_network_isolation(ev["authorization"])
+    except Refusal as e:
+        print(f"REFUSED: {e}"); return 2
+    print("network:", ev["network"])
     out = Path(ev["run_dir"]); out.mkdir(parents=True)
     t = cfg["train"]; before = ev["protected_checkpoint_sha256"]
     record = dict(mode=mode, started_utc=datetime.datetime.now(datetime.timezone.utc).isoformat(), git_commit=git_commit(),
@@ -157,7 +192,7 @@ def main(argv=None):
     os.environ.setdefault("YOLO_OFFLINE", "1")
     from ultralytics import YOLO, settings
     settings.update({"sync": False})
-    data = str(smoke_subset(cfg, root, out, cfg["smoke"]["fraction"], cfg["seed"])) if mode == "smoke" else str((root / cfg["data"]).resolve())
+    data = str(smoke_subset(cfg, root, out, cfg["smoke"]["fraction"], cfg["seed"])) if mode == "smoke" else str(write_abs_data_yaml(cfg, root, out))
     common = dict(data=data, imgsz=t["imgsz"], batch=t["batch"], device=t["device"], workers=t["workers"], seed=cfg["seed"],
                   deterministic=t["deterministic"], amp=t["amp"], plots=t["plots"], patience=t["patience"], mosaic=t["mosaic"], project=str(out), exist_ok=False)
     import restricted_load as rl

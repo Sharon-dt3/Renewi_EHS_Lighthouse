@@ -17,3 +17,9 @@ conditions:
   - "models/best.pt is never loaded or modified; its SHA-256 is checked before and after."
   - "Run only in the isolated environment described in docs/weight-transfer-plan.md section 4."
   - "A smoke test must pass before any full run."
+# Network isolation (approval condition). Real runs refuse if the network is reachable, unless the owner waives it here.
+# Colab and other hosted notebooks cannot guarantee isolation. The waiver must be recorded by the owner, with a name and date.
+# The restricted pickle loader (scripts/restricted_load.py) remains in force either way.
+network_isolation_waived: false
+# network_isolation_waived_by: "<name>"
+# network_isolation_waived_on: "<date>"
