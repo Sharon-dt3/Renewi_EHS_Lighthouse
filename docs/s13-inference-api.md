@@ -48,8 +48,10 @@ curl --fail -F clip_id=approved_demo -F image=@approved-frame.jpg http://127.0.0
 ```
 
 Swagger UI is `/docs`; the live contract is `/openapi.json`.
-**S14 authentication/IP filtering is not implemented. Do not expose this
-service publicly.** C-01 remains approved-public-only until the owner decides
+**S14 security is implemented** (see [s14-security.md](s14-security.md)): every route, including `/health`, `/docs`
+and `/openapi.json`, needs an allow-listed socket peer and HTTP Basic credentials, and uploads need the supervisor
+credential. Start the server with `scripts/run_api.sh`; the curl examples above then need `--user "<user>:<password>"`.
+Still **do not expose it beyond localhost without HTTPS**. C-01 remains approved-public-only until the owner decides
 otherwise. A clip key selects configuration; it cannot establish that uploaded
 image content actually belongs to, or is licensed for, that clip.
 

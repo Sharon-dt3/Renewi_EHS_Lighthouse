@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from backend.models import ErrorResult, HealthResult, InferResult
 from backend.service import InferenceService, load_settings
+from backend.security import SecurityMiddleware, SecuritySettings, install_redaction, load_security
 
 MULTIPART_OVERHEAD = 64 * 1024
 
@@ -95,11 +96,17 @@ INFER_BODY = {
 
 
 # PUBLIC_INTERFACE
-def create_app(service: InferenceService | None = None) -> FastAPI:
-    """Create the S13 application; optional service injection supports model-free tests."""
+def create_app(service: InferenceService | None = None, security: SecuritySettings | None = None) -> FastAPI:
+    """Create the application; optional service and security injection support model-free tests.
+
+    Security settings are mandatory: when none are injected they are read from the environment at startup, and a missing
+    or weak configuration raises, so the service never starts unprotected (fail closed).
+    """
 
     @asynccontextmanager
     async def lifespan(application):
+        application.state.security = security or load_security()          # raises SecurityConfigError: startup aborts
+        install_redaction(application.state.security.secrets())
         if service is None:
             try:
                 settings = load_settings()
@@ -118,7 +125,8 @@ def create_app(service: InferenceService | None = None) -> FastAPI:
             "S11 FrameAnalyzer as the CLI. Server-owned clip registry only; no URLs "
             "or paths from clients. No raw-frame retention or tracking. Immediate "
             "observations are not smoothed/persisted incidents. S14 authentication "
-            "is not implemented; local development only, not public deployment."
+            "S14: every route requires an allow-listed socket peer and HTTP Basic credentials; uploads are "
+            "supervisor-only. HTTPS is required beyond localhost."
         ),
         lifespan=lifespan,
         openapi_tags=[
@@ -132,6 +140,8 @@ def create_app(service: InferenceService | None = None) -> FastAPI:
         if service else 5 * 1024 * 1024 + MULTIPART_OVERHEAD
     )
     application.add_middleware(BoundedBodyMiddleware, limit=lambda: application.state.body_limit)
+    application.state.security = None                                      # set at startup; None means refuse everything (503)
+    application.add_middleware(SecurityMiddleware, settings=lambda: application.state.security)   # outermost: runs first
 
     @application.exception_handler(RequestValidationError)
     async def validation_error(request, error):
@@ -189,6 +199,35 @@ def create_app(service: InferenceService | None = None) -> FastAPI:
         except Exception as error:
             raise HTTPException(500, "Inference failed") from error
 
+    base_openapi = application.openapi
+
+    def secured_openapi():
+        """Published contract with the S14 security scheme and the 401/403 responses on every operation."""
+        if application.openapi_schema:
+            return application.openapi_schema
+        schema = base_openapi()
+        schema.setdefault("components", {}).setdefault("securitySchemes", {})["basicAuth"] = {
+            "type": "http", "scheme": "basic",
+            "description": "HTTP Basic. Two roles: supervisor (may upload) and read-only (may not). HTTPS is required beyond localhost.",
+        }
+        schema["security"] = [{"basicAuth": []}]
+        for operations in schema["paths"].values():
+            for operation in operations.values():
+                operation["security"] = [{"basicAuth": []}]
+                operation["responses"]["401"] = {
+                    "description": "Missing or invalid credentials. Includes a WWW-Authenticate: Basic challenge.",
+                    "headers": {"WWW-Authenticate": {"schema": {"type": "string"}}},
+                    "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}},
+                }
+                operation["responses"]["403"] = {
+                    "description": "Peer address not allow-listed, or the credential's role may not perform this operation.",
+                    "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}},
+                }
+                operation["responses"].setdefault("503", {"description": "Security or model not ready."})
+        application.openapi_schema = schema
+        return schema
+
+    application.openapi = secured_openapi
     return application
 
 

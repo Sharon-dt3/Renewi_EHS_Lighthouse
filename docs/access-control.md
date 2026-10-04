@@ -1,6 +1,6 @@
 # Access control: personas and permissions (DRAFT)
 
-Status: draft, written 2026-10-04. Items marked **[owner-confirmed]** come from the project owner's statements in chat;
+Status: draft, written 2026-10-04. The supervisor/read-only split for the API is implemented in S14 (`docs/s14-security.md`). Items marked **[owner-confirmed]** come from the project owner's statements in chat;
 items marked **[proposal]** are the assistant's suggestions and need the owner's decision. The architecture document
 (SAD v0.1) defines only a shared Basic-auth credential plus an IP allow-list at the deployment boundary (C-05, section 10.1); it defines no
 personas, roles or uploader.

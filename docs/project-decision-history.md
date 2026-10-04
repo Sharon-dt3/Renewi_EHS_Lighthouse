@@ -75,3 +75,10 @@ Recorded risk acceptance, so it is not forgotten:
 - Partial VAL-04 run: 6 MATCH, 0 MISMATCH, 1 NOT_DETECTED, constructed boundary MATCH. Record: `docs/val04-partial-pexels.md`.
 - New outcome category **NOT_DETECTED** keeps model misses separate from zone-logic errors.
 - S12 is **implemented, partially validated**. Still open: the combined PPE-plus-zone case (needs a violator clip), evaluation-use licence, independent table review.
+
+## 13. S13 reviewed, S14 implemented (2026-10-04)
+- S13 (`/infer`, `/health`, G1 contract) reviewed: shared pipeline verified identical to the CLI on a real 1080p frame; bounds and error handling tested live. Open question: whether ADR-003's "clip_id pointer" should also allow analysing a server-held clip with no upload.
+- S14 implemented per ADR-005 / DEC-07: socket-peer IP/CIDR allow-list, constant-time Basic auth, 401 with challenge, 403 for peers and roles, fail-closed configuration, log redaction, supervisor-only upload. 77 new tests, mutation-checked; live checks with `scripts/run_api.sh`.
+- Hazard found and handled: uvicorn's default proxy-header handling lets `X-Forwarded-For` rewrite the peer from 127.0.0.1; the launcher passes `--no-proxy-headers` and a test proves both sides.
+- S15 closed as a library (acceptance criteria met). Wiring to the API and ledger is S16/S17.
+- Not done and recorded: G3 review, HTTPS, rate limiting, named users (SSO).

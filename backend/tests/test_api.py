@@ -1,6 +1,8 @@
 """S13 contract and safety tests; no checkpoint loading or accuracy claims."""
+import base64
 import io
 import json
+import secrets
 from pathlib import Path
 from types import MappingProxyType
 
@@ -11,6 +13,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from backend.app import BoundedBodyMiddleware, create_app
+from backend.security import load_security
 from backend.service import ApiSettings, ClipSettings, InferenceService, decode_image
 from ppe.analysis import FrameAnalyzer, to_dict
 from ppe.class_map import ClassMap
@@ -20,6 +23,19 @@ CMAP = ClassMap("a" * 64, "test", MappingProxyType({
 }))
 RAW = [(0, 0.95, 1, 1, 15, 15), (1, 0.9, 4, 2, 8, 5),
        (4, 0.8, 3, 6, 12, 10)]
+
+# S14: every route needs an allow-listed peer and credentials. Random per-run test values, never real secrets.
+SUP_USER, SUP_PASS = "supervisor1", secrets.token_urlsafe(18)
+RO_USER, RO_PASS = "viewer1", secrets.token_urlsafe(18)
+TEST_SECURITY = load_security({
+    "PPE_ALLOWED_NETWORKS": "127.0.0.1/32", "PPE_SUPERVISOR_USER": SUP_USER, "PPE_SUPERVISOR_PASSWORD": SUP_PASS,
+    "PPE_READONLY_USER": RO_USER, "PPE_READONLY_PASSWORD": RO_PASS})
+SUP_HEADERS = {"Authorization": "Basic " + base64.b64encode(f"{SUP_USER}:{SUP_PASS}".encode()).decode()}
+
+
+def api_client(application):
+    """TestClient that connects from an allow-listed peer with the supervisor credential."""
+    return TestClient(application, client=("127.0.0.1", 50000), headers=SUP_HEADERS)
 
 
 class FakeDetector:
@@ -48,7 +64,7 @@ def service():
 
 @pytest.fixture
 def client(service):
-    with TestClient(create_app(service)) as connection:
+    with api_client(create_app(service, TEST_SECURITY)) as connection:
         yield connection
 
 
@@ -79,7 +95,7 @@ def test_health_ready(client):
 
 def test_missing_environment_fails_readiness_closed(monkeypatch):
     monkeypatch.delenv("PPE_API_CONFIG", raising=False)
-    with TestClient(create_app()) as client:
+    with api_client(create_app(None, TEST_SECURITY)) as client:
         assert client.get("/health").status_code == 503
         assert client.get("/health").json()["ready"] is False
         assert upload(client).status_code == 503
@@ -90,7 +106,7 @@ def test_bad_config_fails_readiness_closed(monkeypatch, tmp_path):
     config = tmp_path / "bad.yaml"
     config.write_text("checkpoint: unused.pt\nclips: {}\n")
     monkeypatch.setenv("PPE_API_CONFIG", str(config))
-    with TestClient(create_app()) as client:
+    with api_client(create_app(None, TEST_SECURITY)) as client:
         assert client.get("/health").status_code == 503
 
 
@@ -128,14 +144,14 @@ def test_invalid_images(client, service, data, mime, status):
 
 def test_file_size_limit(service):
     service.settings.max_file_bytes = 32
-    with TestClient(create_app(service)) as client:
+    with api_client(create_app(service, TEST_SECURITY)) as client:
         assert upload(client).status_code == 413
 
 
 @pytest.mark.parametrize("setting, value", [("max_dimension", 15), ("max_pixels", 255)])
 def test_decoded_size_limits_before_detector(service, setting, value):
     setattr(service.settings, setting, value)
-    with TestClient(create_app(service)) as client:
+    with api_client(create_app(service, TEST_SECURITY)) as client:
         assert upload(client).status_code == 413
     assert service._analyzers["demo"]._detector.calls == 0
 
@@ -183,7 +199,7 @@ def test_zone_and_combined_events_and_resolution(tmp_path):
                      "    polygon: [[0, 12], [16, 12], [16, 16], [0, 16]]\n")
     settings = ApiSettings(checkpoint=Path("unused.pt"), clips={"demo": ClipSettings(zones=zones)})
     service = InferenceService(settings, FakeDetector(), CMAP)
-    with TestClient(create_app(service)) as client:
+    with api_client(create_app(service, TEST_SECURITY)) as client:
         result = upload(client)
         assert result.status_code == 200
         assert result.json()["analysis"]["events"][0]["rules"] == ["PPE_VEST_MISSING", "ZONE_INCURSION"]

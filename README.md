@@ -5,7 +5,8 @@
 The bounded multipart `/infer` API and readiness endpoint wrap the same S11
 pipeline as the CLI. See [S13 setup and safety limits](docs/s13-inference-api.md)
 and the published [G1 OpenAPI contract](docs/openapi.json).
-This is local-only until S14 authentication and IP filtering are implemented.
+S14 security is implemented (Basic auth, IP/CIDR allow-list, supervisor/read-only roles); see
+[S14 security](docs/s14-security.md). Local use only until HTTPS is in place.
 
 ## S12 zone integration
 
@@ -66,9 +67,9 @@ accuracy, class availability, or licensing.
 
 `.gitignore` excludes `.env`, virtual environments, downloaded weights, private
 media, generated outputs, and metrics artifacts. Never commit worker footage
-or credentials. The S13 HTTP service has no authentication interface yet.
-Later API credentials must be requested from the user through the orchestrator,
-not hardcoded or written directly into `.env`.
+or credentials. The HTTP service requires Basic credentials and an allow-listed peer (S14).
+Credentials must be requested from the user through the orchestrator and supplied only in the
+process environment, never hardcoded or written into a file in Git.
 
 Ultralytics licensing requires separate rights review; installing it is not
 approval for redistribution or deployment. Dataset rights and the authoritative

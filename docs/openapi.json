@@ -1,147 +1,662 @@
 {
-  "openapi": "3.1.0",
-  "info": {
-    "title": "Renewi PPE Inference API",
-    "version": "1.0.0",
-    "description": "S13 / G1, ADR-003: bounded multipart image inference using the same S11 FrameAnalyzer as the CLI. Server-owned clip registry only; no URLs or paths from clients. No raw-frame retention or tracking. Immediate observations are not smoothed/persisted incidents. S14 authentication is not implemented; local development only, not public deployment."
+  "components": {
+    "schemas": {
+      "AnalysisResult": {
+        "additionalProperties": false,
+        "description": "Exact schema 1.2 payload emitted by ppe.analysis.to_dict.",
+        "properties": {
+          "detections": {
+            "description": "Normalized five-class detections.",
+            "items": {
+              "$ref": "#/components/schemas/DetectionResult"
+            },
+            "title": "Detections",
+            "type": "array"
+          },
+          "events": {
+            "description": "Immediate observations, without temporal smoothing.",
+            "items": {
+              "$ref": "#/components/schemas/EventResult"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "frame_id": {
+            "description": "Server-generated frame identifier.",
+            "title": "Frame Id",
+            "type": "string"
+          },
+          "height": {
+            "description": "Original decoded height in pixels.",
+            "title": "Height",
+            "type": "integer"
+          },
+          "people": {
+            "description": "Frame-local compliance assessments.",
+            "items": {
+              "$ref": "#/components/schemas/PersonResult"
+            },
+            "title": "People",
+            "type": "array"
+          },
+          "rules": {
+            "description": "Sorted aggregate immediate rules.",
+            "items": {
+              "enum": [
+                "PPE_HELMET_MISSING",
+                "PPE_VEST_MISSING",
+                "ZONE_INCURSION"
+              ],
+              "type": "string"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "1.2",
+            "description": "Shared CLI/API analysis version.",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for independent uploaded images.",
+            "title": "Timestamp"
+          },
+          "unassigned_ppe": {
+            "description": "PPE not associated with a person.",
+            "items": {
+              "$ref": "#/components/schemas/DetectionResult"
+            },
+            "title": "Unassigned Ppe",
+            "type": "array"
+          },
+          "width": {
+            "description": "Original decoded width in pixels.",
+            "title": "Width",
+            "type": "integer"
+          },
+          "zone_incursions": {
+            "description": "Person detections inside the zone.",
+            "items": {
+              "$ref": "#/components/schemas/DetectionResult"
+            },
+            "title": "Zone Incursions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "schema_version",
+          "frame_id",
+          "timestamp",
+          "width",
+          "height",
+          "detections",
+          "people",
+          "unassigned_ppe",
+          "zone_incursions",
+          "events",
+          "rules"
+        ],
+        "title": "AnalysisResult",
+        "type": "object"
+      },
+      "DetectionResult": {
+        "description": "A normalized model detection in original-frame coordinates.",
+        "properties": {
+          "box": {
+            "description": "Source pixels [x1, y1, x2, y2].",
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Box",
+            "type": "array"
+          },
+          "confidence": {
+            "description": "Model confidence.",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "label": {
+            "description": "Canonical five-class label.",
+            "enum": [
+              "person",
+              "helmet",
+              "no_helmet",
+              "safety_vest",
+              "no_safety_vest"
+            ],
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "confidence",
+          "box"
+        ],
+        "title": "DetectionResult",
+        "type": "object"
+      },
+      "ErrorResult": {
+        "description": "Stable, sanitized HTTP error response.",
+        "properties": {
+          "detail": {
+            "description": "Error explanation without internal paths or media.",
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResult",
+        "type": "object"
+      },
+      "EventResult": {
+        "description": "Immediate frame observation, not a persisted or smoothed incident.",
+        "properties": {
+          "foot_point": {
+            "description": "Exact source-pixel bottom-center point.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Foot Point",
+            "type": "array"
+          },
+          "person_index": {
+            "description": "Frame-local person index.",
+            "title": "Person Index",
+            "type": "integer"
+          },
+          "rules": {
+            "description": "Combined immediate PPE and zone rules.",
+            "items": {
+              "enum": [
+                "PPE_HELMET_MISSING",
+                "PPE_VEST_MISSING",
+                "ZONE_INCURSION"
+              ],
+              "type": "string"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "state": {
+            "description": "PPE state.",
+            "enum": [
+              "COMPLIANT",
+              "HELMET_MISSING",
+              "VEST_MISSING",
+              "HELMET_AND_VEST_MISSING",
+              "UNKNOWN"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "zone_incursion": {
+            "description": "Configured zone membership.",
+            "title": "Zone Incursion",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "person_index",
+          "state",
+          "foot_point",
+          "zone_incursion",
+          "rules"
+        ],
+        "title": "EventResult",
+        "type": "object"
+      },
+      "HealthResult": {
+        "description": "Liveness with explicit model/configuration readiness.",
+        "properties": {
+          "ready": {
+            "description": "True only after configuration and model loading succeed.",
+            "title": "Ready",
+            "type": "boolean"
+          },
+          "status": {
+            "description": "Whether inference is available.",
+            "enum": [
+              "ready",
+              "not_ready"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "ready"
+        ],
+        "title": "HealthResult",
+        "type": "object"
+      },
+      "InferResult": {
+        "description": "Inference response and server-selected model provenance.",
+        "properties": {
+          "analysis": {
+            "$ref": "#/components/schemas/AnalysisResult",
+            "description": "Unmodified shared S11 analysis."
+          },
+          "checkpoint_sha256": {
+            "description": "Registered checkpoint digest.",
+            "title": "Checkpoint Sha256",
+            "type": "string"
+          },
+          "clip_id": {
+            "description": "Accepted server registry key.",
+            "title": "Clip Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "clip_id",
+          "checkpoint_sha256",
+          "analysis"
+        ],
+        "title": "InferResult",
+        "type": "object"
+      },
+      "PersonResult": {
+        "description": "Conservative frame-local PPE assessment, never a tracked identity.",
+        "properties": {
+          "box": {
+            "description": "Person box in source pixels.",
+            "maxItems": 4,
+            "minItems": 4,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Box",
+            "type": "array"
+          },
+          "confidence": {
+            "description": "Person detection confidence.",
+            "title": "Confidence",
+            "type": "number"
+          },
+          "foot_point": {
+            "description": "Exact source-pixel bottom-center point.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Foot Point",
+            "type": "array"
+          },
+          "helmet": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Helmet evidence; null means unknown or conflict.",
+            "title": "Helmet"
+          },
+          "helmet_conflict": {
+            "description": "Positive and negative helmet evidence conflict.",
+            "title": "Helmet Conflict",
+            "type": "boolean"
+          },
+          "index": {
+            "description": "Frame-local person index.",
+            "title": "Index",
+            "type": "integer"
+          },
+          "rules": {
+            "description": "Immediate rules for this person, not sustained incidents.",
+            "items": {
+              "enum": [
+                "PPE_HELMET_MISSING",
+                "PPE_VEST_MISSING",
+                "ZONE_INCURSION"
+              ],
+              "type": "string"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "state": {
+            "description": "Conservative PPE compliance state.",
+            "enum": [
+              "COMPLIANT",
+              "HELMET_MISSING",
+              "VEST_MISSING",
+              "HELMET_AND_VEST_MISSING",
+              "UNKNOWN"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "vest": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vest evidence; null means unknown or conflict.",
+            "title": "Vest"
+          },
+          "vest_conflict": {
+            "description": "Positive and negative vest evidence conflict.",
+            "title": "Vest Conflict",
+            "type": "boolean"
+          },
+          "zone_incursion": {
+            "description": "Foot point is inside the configured zone.",
+            "title": "Zone Incursion",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "index",
+          "box",
+          "confidence",
+          "state",
+          "helmet",
+          "vest",
+          "helmet_conflict",
+          "vest_conflict",
+          "foot_point",
+          "zone_incursion",
+          "rules"
+        ],
+        "title": "PersonResult",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "description": "HTTP Basic. Two roles: supervisor (may upload) and read-only (may not). HTTPS is required beyond localhost.",
+        "scheme": "basic",
+        "type": "http"
+      }
+    }
   },
-  "tags": [
-    {"name": "Inference", "description": "Frame-local PPE and optional zone analysis."},
-    {"name": "Health", "description": "Application liveness and model readiness."}
-  ],
+  "info": {
+    "description": "S13 / G1, ADR-003: bounded multipart image inference using the same S11 FrameAnalyzer as the CLI. Server-owned clip registry only; no URLs or paths from clients. No raw-frame retention or tracking. Immediate observations are not smoothed/persisted incidents. S14 authentication S14: every route requires an allow-listed socket peer and HTTP Basic credentials; uploads are supervisor-only. HTTPS is required beyond localhost.",
+    "title": "Renewi PPE Inference API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
   "paths": {
     "/health": {
       "get": {
-        "tags": ["Health"],
-        "summary": "Check liveness and inference readiness",
         "description": "Returns 200 only when the registered model and server configuration are loaded.",
         "operationId": "getHealth",
         "responses": {
-          "200": {"description": "Successful Response", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/HealthResult"}}}},
-          "503": {"description": "Alive, but inference unavailable.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/HealthResult"}}}}
-        }
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Missing or invalid credentials. Includes a WWW-Authenticate: Basic challenge.",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Peer address not allow-listed, or the credential's role may not perform this operation."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResult"
+                }
+              }
+            },
+            "description": "Alive, but inference unavailable."
+          }
+        },
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Check liveness and inference readiness",
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/infer": {
       "post": {
-        "tags": ["Inference"],
-        "summary": "Analyze a bounded uploaded image",
         "description": "Upload exactly image and clip_id as multipart/form-data. JPEG/PNG only. Defaults: 5 MiB file, 4096 px per dimension, 12 million pixels; server configuration can tighten or adjust within hard bounds. Envelope overhead is capped at 64 KiB. Unknown clips and zone dimension mismatches are rejected. Boxes remain in original image pixels. No client model, thresholds, zones, paths or URLs. Only one model execution at a time; busy requests receive 503.",
         "operationId": "inferImage",
         "requestBody": {
-          "required": true,
           "content": {
             "multipart/form-data": {
               "schema": {
-                "type": "object",
                 "additionalProperties": false,
-                "required": ["clip_id", "image"],
                 "properties": {
-                  "clip_id": {"type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z0-9_-]+$", "description": "Server registry key, never a path, URL or configuration."},
-                  "image": {"type": "string", "format": "binary", "description": "Single non-animated JPEG or PNG image."}
+                  "clip_id": {
+                    "description": "Server registry key, never a path, URL or configuration.",
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9_-]+$",
+                    "type": "string"
+                  },
+                  "image": {
+                    "description": "Single non-animated JPEG or PNG image.",
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "clip_id",
+                  "image"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InferResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Malformed multipart request or Content-Length."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Missing or invalid credentials. Includes a WWW-Authenticate: Basic challenge.",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Peer address not allow-listed, or the credential's role may not perform this operation."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Request, image bytes, dimensions or pixel count exceeds limits."
+          },
+          "415": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Unsupported request or image media type."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Invalid fields, clip identifier, image or clip dimensions."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Sanitized unexpected inference failure."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResult"
+                }
+              }
+            },
+            "description": "Model/configuration unavailable or inference worker busy."
           }
         },
-        "responses": {
-          "200": {"description": "Successful Response", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InferResult"}}}},
-          "400": {"description": "Malformed multipart request or Content-Length.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}}},
-          "413": {"description": "Request, image bytes, dimensions or pixel count exceeds limits.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}}},
-          "415": {"description": "Unsupported request or image media type.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}}},
-          "422": {"description": "Invalid fields, clip identifier, image or clip dimensions.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}}},
-          "500": {"description": "Sanitized unexpected inference failure.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}}},
-          "503": {"description": "Model/configuration unavailable or inference worker busy.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResult"}}}}
-        }
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "summary": "Analyze a bounded uploaded image",
+        "tags": [
+          "Inference"
+        ]
       }
     }
   },
-  "components": {
-    "schemas": {
-      "AnalysisResult": {
-        "type": "object", "title": "AnalysisResult", "additionalProperties": false,
-        "description": "Exact schema 1.2 payload emitted by ppe.analysis.to_dict.",
-        "required": ["schema_version", "frame_id", "timestamp", "width", "height", "detections", "people", "unassigned_ppe", "zone_incursions", "events", "rules"],
-        "properties": {
-          "schema_version": {"type": "string", "const": "1.2", "title": "Schema Version", "description": "Shared CLI/API analysis version."},
-          "frame_id": {"type": "string", "title": "Frame Id", "description": "Server-generated frame identifier."},
-          "timestamp": {"anyOf": [{"type": "number"}, {"type": "null"}], "title": "Timestamp", "description": "Null for independent uploaded images."},
-          "width": {"type": "integer", "title": "Width", "description": "Original decoded width in pixels."},
-          "height": {"type": "integer", "title": "Height", "description": "Original decoded height in pixels."},
-          "detections": {"type": "array", "title": "Detections", "description": "Normalized five-class detections.", "items": {"$ref": "#/components/schemas/DetectionResult"}},
-          "people": {"type": "array", "title": "People", "description": "Frame-local compliance assessments.", "items": {"$ref": "#/components/schemas/PersonResult"}},
-          "unassigned_ppe": {"type": "array", "title": "Unassigned Ppe", "description": "PPE not associated with a person.", "items": {"$ref": "#/components/schemas/DetectionResult"}},
-          "zone_incursions": {"type": "array", "title": "Zone Incursions", "description": "Person detections inside the zone.", "items": {"$ref": "#/components/schemas/DetectionResult"}},
-          "events": {"type": "array", "title": "Events", "description": "Immediate observations, without temporal smoothing.", "items": {"$ref": "#/components/schemas/EventResult"}},
-          "rules": {"type": "array", "title": "Rules", "description": "Sorted aggregate immediate rules.", "items": {"type": "string", "enum": ["PPE_HELMET_MISSING", "PPE_VEST_MISSING", "ZONE_INCURSION"]}}
-        }
-      },
-      "DetectionResult": {
-        "type": "object", "title": "DetectionResult",
-        "description": "A normalized model detection in original-frame coordinates.",
-        "required": ["label", "confidence", "box"],
-        "properties": {
-          "label": {"type": "string", "title": "Label", "description": "Canonical five-class label.", "enum": ["person", "helmet", "no_helmet", "safety_vest", "no_safety_vest"]},
-          "confidence": {"type": "number", "title": "Confidence", "description": "Model confidence.", "minimum": 0.0, "maximum": 1.0},
-          "box": {"type": "array", "title": "Box", "description": "Source pixels [x1, y1, x2, y2].", "minItems": 4, "maxItems": 4, "prefixItems": [{"type": "number"}, {"type": "number"}, {"type": "number"}, {"type": "number"}]}
-        }
-      },
-      "ErrorResult": {
-        "type": "object", "title": "ErrorResult", "description": "Stable, sanitized HTTP error response.",
-        "required": ["detail"],
-        "properties": {
-          "detail": {"type": "string", "title": "Detail", "description": "Error explanation without internal paths or media."}
-        }
-      },
-      "EventResult": {
-        "type": "object", "title": "EventResult",
-        "description": "Immediate frame observation, not a persisted or smoothed incident.",
-        "required": ["person_index", "state", "foot_point", "zone_incursion", "rules"],
-        "properties": {
-          "person_index": {"type": "integer", "title": "Person Index", "description": "Frame-local person index."},
-          "state": {"type": "string", "title": "State", "description": "PPE state.", "enum": ["COMPLIANT", "HELMET_MISSING", "VEST_MISSING", "HELMET_AND_VEST_MISSING", "UNKNOWN"]},
-          "foot_point": {"type": "array", "title": "Foot Point", "description": "Exact source-pixel bottom-center point.", "minItems": 2, "maxItems": 2, "prefixItems": [{"type": "number"}, {"type": "number"}]},
-          "zone_incursion": {"type": "boolean", "title": "Zone Incursion", "description": "Configured zone membership."},
-          "rules": {"type": "array", "title": "Rules", "description": "Combined immediate PPE and zone rules.", "items": {"type": "string", "enum": ["PPE_HELMET_MISSING", "PPE_VEST_MISSING", "ZONE_INCURSION"]}}
-        }
-      },
-      "HealthResult": {
-        "type": "object", "title": "HealthResult",
-        "description": "Liveness with explicit model/configuration readiness.",
-        "required": ["status", "ready"],
-        "properties": {
-          "status": {"type": "string", "title": "Status", "description": "Whether inference is available.", "enum": ["ready", "not_ready"]},
-          "ready": {"type": "boolean", "title": "Ready", "description": "True only after configuration and model loading succeed."}
-        }
-      },
-      "InferResult": {
-        "type": "object", "title": "InferResult",
-        "description": "Inference response and server-selected model provenance.",
-        "required": ["clip_id", "checkpoint_sha256", "analysis"],
-        "properties": {
-          "clip_id": {"type": "string", "title": "Clip Id", "description": "Accepted server registry key."},
-          "checkpoint_sha256": {"type": "string", "title": "Checkpoint Sha256", "description": "Registered checkpoint digest."},
-          "analysis": {"$ref": "#/components/schemas/AnalysisResult", "description": "Unmodified shared S11 analysis."}
-        }
-      },
-      "PersonResult": {
-        "type": "object", "title": "PersonResult",
-        "description": "Conservative frame-local PPE assessment, never a tracked identity.",
-        "required": ["index", "box", "confidence", "state", "helmet", "vest", "helmet_conflict", "vest_conflict", "foot_point", "zone_incursion", "rules"],
-        "properties": {
-          "index": {"type": "integer", "title": "Index", "description": "Frame-local person index."},
-          "box": {"type": "array", "title": "Box", "description": "Person box in source pixels.", "minItems": 4, "maxItems": 4, "prefixItems": [{"type": "number"}, {"type": "number"}, {"type": "number"}, {"type": "number"}]},
-          "confidence": {"type": "number", "title": "Confidence", "description": "Person detection confidence."},
-          "state": {"type": "string", "title": "State", "description": "Conservative PPE compliance state.", "enum": ["COMPLIANT", "HELMET_MISSING", "VEST_MISSING", "HELMET_AND_VEST_MISSING", "UNKNOWN"]},
-          "helmet": {"anyOf": [{"type": "boolean"}, {"type": "null"}], "title": "Helmet", "description": "Helmet evidence; null means unknown or conflict."},
-          "vest": {"anyOf": [{"type": "boolean"}, {"type": "null"}], "title": "Vest", "description": "Vest evidence; null means unknown or conflict."},
-          "helmet_conflict": {"type": "boolean", "title": "Helmet Conflict", "description": "Positive and negative helmet evidence conflict."},
-          "vest_conflict": {"type": "boolean", "title": "Vest Conflict", "description": "Positive and negative vest evidence conflict."},
-          "foot_point": {"type": "array", "title": "Foot Point", "description": "Exact source-pixel bottom-center point.", "minItems": 2, "maxItems": 2, "prefixItems": [{"type": "number"}, {"type": "number"}]},
-          "zone_incursion": {"type": "boolean", "title": "Zone Incursion", "description": "Foot point is inside the configured zone."},
-          "rules": {"type": "array", "title": "Rules", "description": "Immediate rules for this person, not sustained incidents.", "items": {"type": "string", "enum": ["PPE_HELMET_MISSING", "PPE_VEST_MISSING", "ZONE_INCURSION"]}}
-        }
-      }
+  "security": [
+    {
+      "basicAuth": []
     }
-  }
+  ],
+  "tags": [
+    {
+      "description": "Frame-local PPE and optional zone analysis.",
+      "name": "Inference"
+    },
+    {
+      "description": "Application liveness and model readiness.",
+      "name": "Health"
+    }
+  ]
 }
