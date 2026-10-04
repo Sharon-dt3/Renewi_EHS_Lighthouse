@@ -1,0 +1,17 @@
+# Copy to a server-controlled file and request PPE_API_CONFIG from the user
+# through the orchestrator. Paths are relative to the nested application root.
+# Replace checkpoint with an explicitly approved, registered checkpoint.
+checkpoint: /replace/with/approved/registered/checkpoint.pt
+classes: config/classes.yaml
+rules: config/rules.yaml
+device: cpu
+imgsz: 640
+confidence: 0.25
+max_file_bytes: 5242880
+max_dimension: 4096
+max_pixels: 12000000
+clips:
+  approved_demo:
+    # null means PPE-only; otherwise use a reviewed zone YAML containing this key.
+    zones: null
+# This template does not authorize footage, inference, or public deployment.

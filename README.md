@@ -1,5 +1,12 @@
 # Renewi EHS Lighthouse — PPE PoC
 
+## S13 inference API
+
+The bounded multipart `/infer` API and readiness endpoint wrap the same S11
+pipeline as the CLI. See [S13 setup and safety limits](docs/s13-inference-api.md)
+and the published [G1 OpenAPI contract](docs/openapi.json).
+This is local-only until S14 authentication and IP filtering are implemented.
+
 ## S12 zone integration
 
 Both local CLI runners support per-clip source-pixel zones and frame-local
@@ -9,8 +16,9 @@ for commands, schema 1.2, the focused synthetic test set (run the full suite wit
 are historical and do not describe the current CLI implementation.
 
 Local Python backend foundation for PEOPLE/PPE worker safety. STEP-01 provides
-an isolated runtime and provenance-gated model download tooling. Model inference, metrics
-evaluation, and HTTP endpoints are not implemented. Pipeline scaffolding under
+an isolated runtime and provenance-gated model download tooling. The sections
+below describe the historical foundation; see S12/S13 above for current behavior.
+Pipeline scaffolding under
 `ppe/` exists but has only been tested on synthetic data (see below). No frontend, forklift logic, face recognition, identity tracking, database,
 or cloud infrastructure is included.
 
@@ -58,7 +66,7 @@ accuracy, class availability, or licensing.
 
 `.gitignore` excludes `.env`, virtual environments, downloaded weights, private
 media, generated outputs, and metrics artifacts. Never commit worker footage
-or credentials. There is currently no HTTP service or authentication interface.
+or credentials. The S13 HTTP service has no authentication interface yet.
 Later API credentials must be requested from the user through the orchestrator,
 not hardcoded or written directly into `.env`.
 
