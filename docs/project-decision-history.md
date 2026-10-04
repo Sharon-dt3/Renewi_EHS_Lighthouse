@@ -55,3 +55,11 @@ A readable record of how the PPE detection work got from the BRD to a smoke-test
 - **Workaround used on Colab for the live run:** the Colab copy of the bundle still had the old script, so its copy of `derived_ppe5/data.yaml` had its `path` line changed to `/content/ws/derived_ppe5` (path line only; the manifest and images are unchanged) and the failed run folder was removed. The run then used the old harness with the corrected path. The bundle was rebuilt afterwards with the fixed harness.
 - Colab showed a generative-AI privacy notice when text was typed in an empty cell; it was **declined** (Cancel).
 - The training run is `colab-full-1` (stage 1: 10 epochs, backbone frozen; stage 2: 90 epochs). Early log: about 20 to 30 seconds per epoch.
+
+## 10. Decision to proceed (2026-10-04)
+After the first look at footage (`reports/inference/pexels_clip1`, 8 frames), the project owner decided to **proceed on the assumption that the model is acceptable for the PoC** and move on to the application layers.
+Recorded risk acceptance, so it is not forgotten:
+- **Known weakness:** the `no_safety_vest` class. Lowest validation result (mAP50 0.76, precision 0.75, on 23 objects) and, on the Pexels clip, three false "no vest" detections on vested workers (two at confidence 0.65 to 0.71) in 2 of 8 frames. Likely causes: noisy original labels and bent or occluded postures.
+- **Not measured:** recall for real missing-PPE cases (the clip had no violators), behaviour on CCTV-quality footage, and any figure from an independent evaluation set (OPEN-02 still open).
+- **Mitigations planned in the pipeline:** a higher confidence floor for negative classes, an UNKNOWN verdict whenever evidence conflicts, and 1.5-second sustained-detection smoothing (S15).
+- Accuracy claims remain forbidden until the independent set exists (`docs/acceptance-thresholds.md`).

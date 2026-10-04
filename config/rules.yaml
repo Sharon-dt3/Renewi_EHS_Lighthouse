@@ -1,0 +1,7 @@
+# Rule settings for per-worker compliance and sustained-incident smoothing (S11, S15).
+# Change values only with a note in docs/project-decision-history.md.
+min_positive_confidence: 0.25   # helmet / safety_vest / person boxes below this are ignored upstream
+min_negative_confidence: 0.50   # no_helmet / no_safety_vest below this do NOT count as evidence of a violation
+hold_seconds: 1.5               # a violation must persist this long before an incident is raised (BRD / NFR-04)
+max_gap_seconds: 1.0            # consecutive observations further apart than this start a new run
+sample_fps: 4                   # frame sampling rate for video; must be >= 1 / max_gap_seconds
